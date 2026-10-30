@@ -46,13 +46,13 @@ export const Footer: React.FC<FooterProps> = ({ currentLang }) => {
             {currentLang === 'pt' && 'Horários'}
           </strong>
           <p className="leading-relaxed">
-            {currentLang === 'es' && 'Lunes a viernes · 7:30 a 20 h'}
-            {currentLang === 'en' && 'Monday to Friday · 7:30 to 20 h'}
-            {currentLang === 'pt' && 'Segunda a sexta · 7:30 às 20 h'}
+            {currentLang === 'es' && 'Lunes a viernes · 7:30 a 21 h'}
+            {currentLang === 'en' && 'Monday to Friday · 7:30 to 21 h'}
+            {currentLang === 'pt' && 'Segunda a sexta · 7:30 às 21 h'}
             <br />
-            {currentLang === 'es' && 'Sábados y domingos · 8:30 a 19 h'}
-            {currentLang === 'en' && 'Saturday & Sunday · 8:30 to 19 h'}
-            {currentLang === 'pt' && 'Sábado e domingo · 8:30 às 19 h'}
+            {currentLang === 'es' && 'Sábados y domingos · 8:30 a 20:30 h'}
+            {currentLang === 'en' && 'Saturday & Sunday · 8:30 to 20:30 h'}
+            {currentLang === 'pt' && 'Sábado e domingo · 8:30 às 20:30 h'}
           </p>
 
           <div className="mt-2.5 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-paper border border-line text-[11px] font-medium font-sans">
