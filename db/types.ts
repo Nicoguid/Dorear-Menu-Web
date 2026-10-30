@@ -40,7 +40,7 @@ export interface MenuCategory {
 
 export interface WeeklyDish {
   dayName: LocalizedString;
-  dayNumber: number; // 1 = Lunes ... 5 = Viernes
+  dayNumber: number;
   title: LocalizedString;
   description: LocalizedString;
   imageUrl: string;

@@ -23,7 +23,6 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   return (
     <header className="w-full bg-cream">
-      {/* Top utility bar */}
       <div className="border-b border-line px-4 py-2.5 max-w-2xl mx-auto flex items-center justify-between text-[11px] text-muted tracking-wider uppercase font-sans">
         <div className="flex items-center gap-2 font-medium">
           <span>Puerto Madero</span>
@@ -39,7 +38,6 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
         </div>
 
-        {/* Trilingual Selector + Instagram & Staff Button */}
         <div className="flex items-center gap-3">
           <div
             role="group"
@@ -93,7 +91,6 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      {/* Hero section */}
       <div className="px-5 pt-8 pb-5 text-center max-w-xl mx-auto">
         <div className="w-11 h-20 border border-gold rounded-full mx-auto mb-4 flex flex-col items-center justify-between py-1.5 text-gold font-serif text-xs select-none">
           <span className="font-semibold text-[11px] tracking-widest">A</span>

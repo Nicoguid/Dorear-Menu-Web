@@ -38,9 +38,7 @@ export async function getSharedState(): Promise<DorearSharedState | null> {
           currentSharedState = validated;
         }
       }
-    } catch {
-      // Ignore disk errors in read-only or ephemeral environments
-    }
+    } catch {}
   }
   return currentSharedState;
 }
@@ -73,13 +71,9 @@ export async function updateSharedState(
           await fsPromises.writeFile(STATE_TEMP_PATH, serialized, 'utf-8');
           await fsPromises.rename(STATE_TEMP_PATH, STATE_FILE_PATH);
         }
-      } catch {
-        // Ignore disk errors in read-only / serverless environments
-      }
+      } catch {}
     })
-    .catch(() => {
-      // Keep queue alive
-    });
+    .catch(() => {});
 
   await writeQueue;
   return currentSharedState;

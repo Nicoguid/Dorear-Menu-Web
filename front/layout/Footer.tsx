@@ -95,7 +95,6 @@ export const Footer: React.FC<FooterProps> = ({ currentLang }) => {
         </div>
       </div>
 
-      {/* Legal & Regulatory Compliance Section (CABA & Argentina) */}
       <div className="max-w-xl mx-auto px-5 mt-8 pt-6 border-t border-line/60 space-y-3 text-[11px] text-muted text-center sm:text-left leading-relaxed">
         <p>
           <strong className="text-ink font-semibold">

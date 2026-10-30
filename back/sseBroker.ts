@@ -39,9 +39,7 @@ export function addSseClient(client: SseClient): () => void {
       sseClients.delete(oldest);
       try {
         oldest.close?.();
-      } catch {
-        // Ignore close errors
-      }
+      } catch {}
     }
   }
 

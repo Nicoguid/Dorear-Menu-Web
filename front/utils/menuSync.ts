@@ -33,9 +33,7 @@ export function loadValidatedLocalState(defaults: {
       const parsed = JSON.parse(rawItems);
       if (isValidMenuItemArray(parsed)) items = parsed;
     }
-  } catch {
-    // Fallback to default items
-  }
+  } catch {}
 
   try {
     const rawWeekly = localStorage.getItem(STORAGE_KEYS.WEEKLY);
@@ -43,9 +41,7 @@ export function loadValidatedLocalState(defaults: {
       const parsed = JSON.parse(rawWeekly);
       if (isValidWeeklyDishArray(parsed)) weeklyDishes = parsed;
     }
-  } catch {
-    // Fallback to default weekly dishes
-  }
+  } catch {}
 
   try {
     const rawOverride = localStorage.getItem(STORAGE_KEYS.OVERRIDE);
@@ -55,9 +51,7 @@ export function loadValidatedLocalState(defaults: {
         weeklyOverrideDay = parsed;
       }
     }
-  } catch {
-    // Fallback to null
-  }
+  } catch {}
 
   try {
     const rawSettings = localStorage.getItem(STORAGE_KEYS.SETTINGS);
@@ -65,9 +59,7 @@ export function loadValidatedLocalState(defaults: {
       const parsed = JSON.parse(rawSettings);
       if (isValidStoreSettings(parsed)) storeSettings = parsed;
     }
-  } catch {
-    // Fallback to default settings
-  }
+  } catch {}
 
   try {
     const rawUpdated = localStorage.getItem(STORAGE_KEYS.UPDATED_AT);
@@ -127,9 +119,7 @@ export function broadcastStateChange(
       bc.postMessage(state);
       bc.close();
     }
-  } catch {
-    // Ignore if BroadcastChannel is restricted
-  }
+  } catch {}
 
   const staffPin = role === 'admin' ? '8888' : role === 'barista' ? '1234' : '';
   const headers: Record<string, string> = {
@@ -156,9 +146,7 @@ export function broadcastStateChange(
         }
       }
     })
-    .catch(() => {
-      // Offline or static-only host fallback
-    });
+    .catch(() => {});
 }
 
 export function subscribeToRealtimeSync(
@@ -213,14 +201,10 @@ export function subscribeToRealtimeSync(
       eventSource.onmessage = (event) => {
         try {
           handlePayload(JSON.parse(event.data));
-        } catch {
-          // Ignore malformed event
-        }
+        } catch {}
       };
     }
-  } catch {
-    // Fallback if SSE is unavailable
-  }
+  } catch {}
 
   try {
     if ('BroadcastChannel' in window) {
@@ -229,9 +213,7 @@ export function subscribeToRealtimeSync(
         handlePayload(event.data);
       };
     }
-  } catch {
-    // Ignore
-  }
+  } catch {}
 
   return () => {
     if (bc) bc.close();

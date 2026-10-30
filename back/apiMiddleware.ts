@@ -7,7 +7,7 @@ import {
 } from './stateStore';
 import { addSseClient, broadcastSsePayload } from './sseBroker';
 
-const MAX_BODY_BYTES = 512_000; // 512 KB limit
+const MAX_BODY_BYTES = 512_000;
 const textEncoder = new TextEncoder();
 
 const env =

@@ -4,11 +4,11 @@ export interface BuenosAiresNow {
   year: number;
   month: number;
   day: number;
-  weekday: number; // 0 = Sunday, 1 = Monday ... 6 = Saturday
+  weekday: number;
   hour: number;
   minute: number;
   totalMinutes: number;
-  isoDate: string; // YYYY-MM-DD in Buenos Aires local time
+  isoDate: string;
 }
 
 const WEEKDAY_INDEX: Record<string, number> = {
@@ -88,8 +88,8 @@ export interface StoreOpenStatus {
 export function getStoreOpenStatus(date: Date = new Date()): StoreOpenStatus {
   const bsAs = getBuenosAiresNow(date);
   const isWeekday = bsAs.weekday >= 1 && bsAs.weekday <= 5;
-  const openMinutes = isWeekday ? 7 * 60 + 30 : 8 * 60 + 30; // 07:30 L-V, 08:30 S-D
-  const closeMinutes = isWeekday ? 20 * 60 : 19 * 60; // 20:00 L-V, 19:00 S-D
+  const openMinutes = isWeekday ? 7 * 60 + 30 : 8 * 60 + 30;
+  const closeMinutes = isWeekday ? 20 * 60 : 19 * 60;
   const isOpen = bsAs.totalMinutes >= openMinutes && bsAs.totalMinutes < closeMinutes;
 
   return {

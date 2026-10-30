@@ -201,7 +201,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           </div>
         )}
 
-        {/* --- SECCIÓN 1: MENÚ SEMANAL EJECUTIVO --- */}
         <div className="bg-paper rounded-2xl border border-line p-4 mb-6 shadow-soft">
           <div className="flex items-center justify-between gap-2 mb-2">
             <div className="flex items-center gap-2 text-wine font-serif font-medium text-lg">
@@ -295,7 +294,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           </div>
         </div>
 
-        {/* --- SECCIÓN 2: CARTA GENERAL Y PLATOS --- */}
         <div className="bg-paper rounded-2xl border border-line p-4 mb-4 shadow-soft">
           <div className="flex items-center justify-between gap-2 mb-3">
             <span className="text-xs font-semibold text-muted uppercase tracking-wider">
@@ -343,7 +341,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           </div>
         </div>
 
-        {/* Items List in Selected Category */}
         <div className="space-y-2.5">
           {currentCatItems.map((item) => {
             const currentVal =
@@ -462,7 +459,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           )}
         </div>
 
-        {/* --- SECCIÓN 3: CONFIGURACIÓN GENERAL DEL LOCAL --- */}
         <div className="bg-paper rounded-2xl border border-line p-4 mt-6 mb-6 shadow-soft">
           <div className="flex items-center gap-2 text-wine font-serif font-medium text-lg mb-2">
             <Settings size={18} />

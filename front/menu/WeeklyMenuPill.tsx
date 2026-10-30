@@ -34,7 +34,6 @@ export const WeeklyMenuPill: React.FC<WeeklyMenuPillProps> = ({
   return (
     <section className="w-full max-w-xl mx-auto px-4 my-3.5 select-none animate-fade-in" aria-label="Menú Ejecutivo Semanal">
       <div className="bg-gradient-to-b from-paper to-cream/90 rounded-3xl border-2 border-gold/35 shadow-soft overflow-hidden transition-all duration-300 relative">
-        {/* Banner superior destacado */}
         <div className="bg-wine text-white px-4 py-2 flex items-center justify-between text-xs">
           <div className="flex items-center gap-2 font-medium tracking-wide">
             <ChefHat size={15} className="text-gold-light" />
@@ -51,7 +50,6 @@ export const WeeklyMenuPill: React.FC<WeeklyMenuPillProps> = ({
           </span>
         </div>
 
-        {/* Tarjeta hero del plato de hoy */}
         <div className="p-4 sm:p-5">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-3">
             <div className="flex items-center gap-2 flex-wrap">
@@ -86,7 +84,6 @@ export const WeeklyMenuPill: React.FC<WeeklyMenuPillProps> = ({
             </div>
           </div>
 
-          {/* Fila con foto del plato de hoy e información */}
           <div
             onClick={() => onSelectDish(todayDish)}
             role="button"
@@ -125,7 +122,6 @@ export const WeeklyMenuPill: React.FC<WeeklyMenuPillProps> = ({
             </div>
           </div>
 
-          {/* Botón para expandir los platos de toda la semana */}
           <div className="mt-3 pt-3 border-t border-line/70 flex items-center justify-between">
             <span className="text-[11px] text-muted italic font-serif">
               {currentLang === 'es' && 'Incluye bebida y café a elección'}
@@ -162,7 +158,6 @@ export const WeeklyMenuPill: React.FC<WeeklyMenuPillProps> = ({
           </div>
         </div>
 
-        {/* Sección desplegable con los 5 días */}
         {isExpanded && (
           <div className="border-t border-line p-4 bg-cream/40 space-y-2.5 animate-fade-in">
             <div className="flex items-center justify-between text-xs text-muted pb-1 border-b border-line/60">
