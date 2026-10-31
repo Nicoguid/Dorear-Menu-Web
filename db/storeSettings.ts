@@ -2,8 +2,8 @@ import { StoreSettings } from './types';
 
 export const DEFAULT_STORE_SETTINGS: StoreSettings = {
   whatsappNumber: '5491136458899',
-  wifiSSID: 'DoreAR_Cafe',
-  wifiPassword: 'saboresqueenamoran',
+  wifiSSID: 'dorear',
+  wifiPassword: '12345678',
   groupMenuPricePerPerson: 14500,
 };
 
