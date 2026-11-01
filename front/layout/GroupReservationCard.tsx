@@ -31,11 +31,11 @@ export const GroupReservationCard: React.FC<GroupReservationCardProps> = ({
 
             <p className="text-xs sm:text-sm text-muted leading-relaxed mt-2">
               {currentLang === 'es' &&
-                'Nuestro salón cuenta con 8 mesas. Para grupos de 5 a 16 comensales, preparamos y reservamos tu mesa con anticipación, con opción de Merienda Degustación de autor o carta abierta.'}
+                'Para grupos de 5 a 16 comensales, preparamos y reservamos tu mesa con anticipación con nuestra propuesta exclusiva de Merienda Degustación de autor (menú fijo).'}
               {currentLang === 'en' &&
-                'Our dining room has 8 tables. For parties of 5 to 16 guests, we arrange and prepare your table in advance, with signature tasting menu or à la carte options.'}
+                'For parties of 5 to 16 guests, we arrange and prepare your table in advance with our exclusive signature tasting menu (fixed menu).'}
               {currentLang === 'pt' &&
-                'Nosso salão conta com 8 mesas. Para grupos a partir de 5 pessoas, preparamos sua mesa com antecedência com opção de menu degustação autoral ou à la carte.'}
+                'Para grupos de 5 a 16 pessoas, preparamos sua mesa com antecedência com nossa proposta exclusiva de menu degustação autoral (menu fixo).'}
             </p>
           </div>
 

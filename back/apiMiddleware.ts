@@ -1,5 +1,6 @@
 import type { Plugin } from 'vite';
 import { validateSharedStatePayload } from '../db/stateValidation';
+import { HASH_ADMIN, HASH_BARISTA, PIN_SALT } from '../db/storeSettings';
 import {
   applyBaristaStateUpdate,
   getSharedState,
@@ -8,12 +9,13 @@ import {
 import { addSseClient, broadcastSsePayload } from './sseBroker';
 
 const MAX_BODY_BYTES = 512_000;
+const MAX_TRACKED_IPS = 500;
 const textEncoder = new TextEncoder();
 
 const env =
   (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env || {};
-const ADMIN_PIN = env.DOREAR_ADMIN_PIN || '8888';
-const BARISTA_PIN = env.DOREAR_BARISTA_PIN || '1234';
+const ENV_ADMIN_PIN = env.DOREAR_ADMIN_PIN?.trim() || '';
+const ENV_BARISTA_PIN = env.DOREAR_BARISTA_PIN?.trim() || '';
 
 function safePinEquals(input: string, expected: string): boolean {
   const a = textEncoder.encode(input);
@@ -26,12 +28,74 @@ function safePinEquals(input: string, expected: string): boolean {
   return diff === 0;
 }
 
-function resolveStaffRole(pinHeader: unknown): 'admin' | 'barista' | null {
+async function computeSha256Hex(str: string): Promise<string> {
+  if (typeof crypto !== 'undefined' && crypto.subtle && typeof crypto.subtle.digest === 'function') {
+    const data = textEncoder.encode(str);
+    const hash = await crypto.subtle.digest('SHA-256', data);
+    return Array.from(new Uint8Array(hash))
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('');
+  }
+  return '';
+}
+
+async function resolveStaffRole(pinHeader: unknown): Promise<'admin' | 'barista' | null> {
   if (typeof pinHeader !== 'string' || !pinHeader.trim()) return null;
   const trimmed = pinHeader.trim();
-  if (safePinEquals(trimmed, ADMIN_PIN)) return 'admin';
-  if (safePinEquals(trimmed, BARISTA_PIN)) return 'barista';
+  if (trimmed.length > 32) return null;
+
+  if (ENV_ADMIN_PIN && safePinEquals(trimmed, ENV_ADMIN_PIN)) return 'admin';
+  if (ENV_BARISTA_PIN && safePinEquals(trimmed, ENV_BARISTA_PIN)) return 'barista';
+
+  const digest = await computeSha256Hex(PIN_SALT + trimmed);
+  if (!digest) return null;
+  if (safePinEquals(digest, HASH_ADMIN)) return 'admin';
+  if (safePinEquals(digest, HASH_BARISTA)) return 'barista';
   return null;
+}
+
+const failedAttemptsByIp = new Map<string, { count: number; lockedUntil: number }>();
+
+function pruneTrackedIps(now: number): void {
+  if (failedAttemptsByIp.size < MAX_TRACKED_IPS) return;
+  for (const [key, val] of failedAttemptsByIp.entries()) {
+    if (val.lockedUntil > 0 && now > val.lockedUntil) {
+      failedAttemptsByIp.delete(key);
+    }
+  }
+  if (failedAttemptsByIp.size >= MAX_TRACKED_IPS) {
+    const oldestKey = failedAttemptsByIp.keys().next().value;
+    if (oldestKey !== undefined) {
+      failedAttemptsByIp.delete(oldestKey);
+    }
+  }
+}
+
+function isIpRateLimited(ip: string): boolean {
+  const record = failedAttemptsByIp.get(ip);
+  if (!record) return false;
+  const now = Date.now();
+  if (now < record.lockedUntil) return true;
+  return false;
+}
+
+function recordIpFailure(ip: string): void {
+  const now = Date.now();
+  pruneTrackedIps(now);
+  const record = failedAttemptsByIp.get(ip) || { count: 0, lockedUntil: 0 };
+  record.count += 1;
+  if (record.count >= 6) {
+    record.lockedUntil = now + 60_000;
+  } else if (record.count === 5) {
+    record.lockedUntil = now + 45_000;
+  } else if (record.count >= 4) {
+    record.lockedUntil = now + 30_000;
+  }
+  failedAttemptsByIp.set(ip, record);
+}
+
+function recordIpSuccess(ip: string): void {
+  failedAttemptsByIp.delete(ip);
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -83,13 +147,23 @@ function attachRealtimeMiddleware(middlewares: any): void {
       }
 
       if (req.method === 'POST') {
+        const clientIp = String(req.socket?.remoteAddress || 'local');
+        if (isIpRateLimited(clientIp)) {
+          res.writeHead(429, { 'Content-Type': 'application/json; charset=utf-8' });
+          res.end(JSON.stringify({ ok: false, error: 'Demasiados intentos fallidos. Por favor esperá 30 segundos.' }));
+          return;
+        }
+
         const staffPin = req.headers?.['x-dorear-pin'];
-        const role = resolveStaffRole(staffPin);
+        const role = await resolveStaffRole(staffPin);
         if (!role) {
+          recordIpFailure(clientIp);
+          await new Promise((r) => setTimeout(r, 400));
           res.writeHead(401, { 'Content-Type': 'application/json; charset=utf-8' });
           res.end(JSON.stringify({ ok: false, error: 'Unauthorized: valid staff PIN required' }));
           return;
         }
+        recordIpSuccess(clientIp);
 
         let body = '';
         let byteCount = 0;

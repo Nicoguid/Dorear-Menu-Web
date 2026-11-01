@@ -7,6 +7,7 @@ import {
   StoreSettings,
   WeeklyDish,
 } from './types';
+import { CURRENT_STATE_VERSION } from './storeSettings';
 
 export interface DorearSharedState {
   version: number;
@@ -26,17 +27,20 @@ export function isSafeImageUrl(url: string): boolean {
   if (trimmed.length > 2048) return false;
   try {
     const parsed = new URL(trimmed);
-    if (parsed.protocol !== 'https:') {
+    if (parsed.protocol !== 'https:' || parsed.username || parsed.password) {
       return false;
     }
     const host = parsed.hostname.toLowerCase();
     if (
       host === 'localhost' ||
-      host === '127.0.0.1' ||
       host === '0.0.0.0' ||
       host === '[::1]' ||
+      host.startsWith('127.') ||
       host.startsWith('10.') ||
       host.startsWith('192.168.') ||
+      host.startsWith('169.254.') ||
+      host.endsWith('.local') ||
+      host.endsWith('.internal') ||
       /^172\.(1[6-9]|2\d|3[0-1])\./.test(host)
     ) {
       return false;
@@ -186,7 +190,7 @@ export function validateSharedStatePayload(payload: unknown): DorearSharedState 
       : null;
 
   return {
-    version: 10,
+    version: CURRENT_STATE_VERSION,
     updatedAt:
       typeof data.updatedAt === 'number' && Number.isFinite(data.updatedAt) && data.updatedAt > 0
         ? data.updatedAt

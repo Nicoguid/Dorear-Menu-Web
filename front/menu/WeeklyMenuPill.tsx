@@ -122,8 +122,9 @@ export const WeeklyMenuPill: React.FC<WeeklyMenuPillProps> = ({
             </div>
           </div>
 
-          <div className="mt-3 pt-3 border-t border-line/70 flex items-center justify-between">
-            <span className="text-[11px] text-muted italic font-serif">
+          <div className="mt-3 pt-3 border-t border-line/70 flex flex-wrap items-center justify-between gap-2">
+            <span className="text-xs sm:text-sm font-sans font-semibold text-wine flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-gold shrink-0" />
               {currentLang === 'es' && 'Incluye bebida y café a elección'}
               {currentLang === 'en' && 'Includes choice of drink and coffee'}
               {currentLang === 'pt' && 'Inclui bebida e café à escolha'}

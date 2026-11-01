@@ -105,7 +105,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     onUpdateSettings({
       ...localSettings,
       whatsappNumber: cleanPhone,
-      wifiSSID: localSettings.wifiSSID.trim() || 'DoreAR_Cafe',
+      wifiSSID: localSettings.wifiSSID.trim() || 'dorear',
       wifiPassword: localSettings.wifiPassword.trim(),
     });
     showFeedback('Configuración del local guardada y sincronizada.');
@@ -502,7 +502,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   onChange={(e) =>
                     setLocalSettings({ ...localSettings, wifiSSID: e.target.value })
                   }
-                  placeholder="DoreAR_Cafe"
+                  placeholder="dorear"
                   className="w-full min-h-[40px] bg-cream border border-line rounded-xl px-3 py-2 text-ink focus:border-wine focus:outline-none"
                 />
               </div>
@@ -518,7 +518,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   onChange={(e) =>
                     setLocalSettings({ ...localSettings, wifiPassword: e.target.value })
                   }
-                  placeholder="saboresqueenamoran"
+                  placeholder="12345678"
                   className="w-full min-h-[40px] bg-cream border border-line rounded-xl px-3 py-2 font-mono text-wine font-semibold focus:border-wine focus:outline-none"
                 />
               </div>

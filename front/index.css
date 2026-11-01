@@ -5,12 +5,8 @@
 @layer base {
   :root {
     --cream: #faf7f0;
-    --paper: #fffcf7;
     --ink: #372e25;
-    --muted: #766b5d;
     --gold: #a67c3f;
-    --line: #e6dac6;
-    --wine: #672d35;
   }
 
   body {

@@ -8,7 +8,7 @@ import {
 } from '../db/types';
 import { CATEGORIES, INITIAL_MENU_ITEMS } from '../db/menuData';
 import { WEEKLY_MENU_DISHES } from '../db/weeklyMenu';
-import { DEFAULT_STORE_SETTINGS } from '../db/storeSettings';
+import { CURRENT_STATE_VERSION, DEFAULT_STORE_SETTINGS } from '../db/storeSettings';
 import { WheatOff, Leaf, MilkOff, MessageSquare, WifiOff } from 'lucide-react';
 
 import { Header } from './layout/Header';
@@ -45,7 +45,7 @@ const AdminPanel = lazy(() =>
 
 function buildDefaultState(): DorearSharedState {
   return {
-    version: 10,
+    version: CURRENT_STATE_VERSION,
     updatedAt: Date.now(),
     items: INITIAL_MENU_ITEMS,
     weeklyDishes: WEEKLY_MENU_DISHES,
@@ -115,15 +115,15 @@ export function App() {
         const nextPartial = updater(prev);
         const nextState: DorearSharedState = {
           ...nextPartial,
-          version: 10,
+          version: CURRENT_STATE_VERSION,
           updatedAt: Date.now(),
         };
         saveLocalStateSnapshot(nextState);
-        broadcastStateChange(nextState, currentRole);
+        broadcastStateChange(nextState);
         return nextState;
       });
     },
-    [currentRole]
+    []
   );
 
   const handleOpenTakeAwayWhatsApp = () => {
@@ -216,8 +216,17 @@ export function App() {
     ) {
       clearLocalStateSnapshot();
       setSharedState(buildDefaultState());
-      broadcastStateChange({ reset: true }, 'admin');
+      broadcastStateChange({ reset: true });
     }
+  };
+
+  const handleExitStaff = () => {
+    try {
+      sessionStorage.removeItem('dorear_session_pin');
+    } catch {
+      // ignore storage errors
+    }
+    setCurrentRole('customer');
   };
 
   const handleSelectWeeklyDish = (dish: WeeklyDish) => {
@@ -263,7 +272,7 @@ export function App() {
           items={items}
           isLiveSync={isLiveSync}
           onToggleAvailability={handleToggleAvailability}
-          onExit={() => setCurrentRole('customer')}
+          onExit={handleExitStaff}
         />
       </Suspense>
     );
@@ -294,7 +303,7 @@ export function App() {
           settings={storeSettings}
           onUpdateSettings={handleUpdateSettings}
           onResetDefaults={handleResetDefaults}
-          onExit={() => setCurrentRole('customer')}
+          onExit={handleExitStaff}
         />
       </Suspense>
     );

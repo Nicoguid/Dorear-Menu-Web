@@ -31,8 +31,8 @@
    * 5 estrellas doradas con llamado a la acción para turistas y clientes satisfechos.
 8. **Doble Acceso por PIN (Separación Operativa / Gerencial):**  
    * Toque en el candado superior para ingresar el PIN de 4 dígitos:
-     * **PIN Barista (`1234`):** Panel ultra-rápido de salón. Permite marcar productos como **"Disponible"** o **"Agotado"** en 2 segundos sin tocar precios ni configuraciones.
-     * **PIN Dueña / Agustina (`8888`):** Permite editar precios directamente, actualizar el menú semanal o restaurar valores.
+     * **Personal / Barra:** Panel ultra-rápido de salón. Permite marcar productos como **"Disponible"** o **"Agotado"** en 2 segundos sin tocar precios ni configuraciones.
+     * **Dueña / Administración:** Permite editar precios directamente, actualizar el menú semanal o restaurar valores.
 
 ---
 
@@ -57,7 +57,6 @@
 
 ---
 
-## 🔑 CÓDIGOS PIN DE DEMOSTRACIÓN
+## 🔒 SEGURIDAD Y ACCESOS DEL LOCAL
 
-* **Personal / Barra:** `1234`
-* **Dueña / Agustina:** `8888`
+Los códigos PIN de acceso para el personal (modo barra/mozos) y la administración son confidenciales del establecimiento y no deben exponerse públicamente. Se gestionan y validan de forma privada.

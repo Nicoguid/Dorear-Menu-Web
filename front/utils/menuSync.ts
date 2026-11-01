@@ -1,5 +1,9 @@
 import { MenuItem, StoreSettings, WeeklyDish } from '../../db/types';
-import { BROADCAST_CHANNEL_NAME, STORAGE_KEYS } from '../../db/storeSettings';
+import {
+  BROADCAST_CHANNEL_NAME,
+  CURRENT_STATE_VERSION,
+  STORAGE_KEYS,
+} from '../../db/storeSettings';
 import {
   DorearSharedState,
   isValidMenuItemArray,
@@ -9,12 +13,6 @@ import {
 } from '../../db/stateValidation';
 
 export type { DorearSharedState };
-export {
-  isValidMenuItemArray,
-  isValidWeeklyDishArray,
-  isValidStoreSettings,
-  validateSharedStatePayload,
-};
 
 export function loadValidatedLocalState(defaults: {
   items: MenuItem[];
@@ -72,7 +70,7 @@ export function loadValidatedLocalState(defaults: {
   }
 
   return {
-    version: 10,
+    version: CURRENT_STATE_VERSION,
     updatedAt,
     items,
     weeklyDishes,
@@ -100,18 +98,25 @@ export function saveLocalStateSnapshot(state: DorearSharedState): void {
 export function clearLocalStateSnapshot(): void {
   try {
     Object.values(STORAGE_KEYS).forEach((k) => localStorage.removeItem(k));
-    localStorage.removeItem('dorear_menu_items_v9');
-    localStorage.removeItem('dorear_weekly_dishes_v9');
-    localStorage.removeItem('dorear_weekly_override');
-    localStorage.removeItem('dorear_store_settings_v1');
+    const legacyKeys = [
+      'dorear_menu_items_v9',
+      'dorear_weekly_dishes_v9',
+      'dorear_weekly_override',
+      'dorear_store_settings_v1',
+      'dorear_menu_items_v10',
+      'dorear_weekly_dishes_v10',
+      'dorear_weekly_override_v10',
+      'dorear_store_settings_v10',
+      'dorear_state_updated_at_v10',
+    ];
+    legacyKeys.forEach((k) => localStorage.removeItem(k));
   } catch (e) {
     console.error('Error clearing localStorage', e);
   }
 }
 
 export function broadcastStateChange(
-  state: DorearSharedState | { reset: true },
-  role: 'customer' | 'barista' | 'admin' = 'admin'
+  state: DorearSharedState | { reset: true }
 ): void {
   try {
     if ('BroadcastChannel' in window) {
@@ -121,7 +126,10 @@ export function broadcastStateChange(
     }
   } catch {}
 
-  const staffPin = role === 'admin' ? '8888' : role === 'barista' ? '1234' : '';
+  let staffPin = '';
+  try {
+    staffPin = sessionStorage.getItem('dorear_session_pin') || '';
+  } catch {}
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   };

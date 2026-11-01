@@ -839,7 +839,7 @@ export const INITIAL_MENU_ITEMS: MenuItem[] = [
       "en": "Soft baked cookie with 70% dark chocolate and sea salt.",
       "pt": "Massa macia com chocolate 70% e flor de sal."
     },
-    "price": 4500,
+    "price": 6000,
     "available": true,
     "imageUrl": "https://images.unsplash.com/photo-1499636136210-6f4ee915583e?auto=format&fit=crop&w=900&q=80"
   },

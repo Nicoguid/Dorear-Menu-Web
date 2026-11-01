@@ -89,14 +89,14 @@ export function getStoreOpenStatus(date: Date = new Date()): StoreOpenStatus {
   const bsAs = getBuenosAiresNow(date);
   const isWeekday = bsAs.weekday >= 1 && bsAs.weekday <= 5;
   const openMinutes = isWeekday ? 7 * 60 + 30 : 8 * 60 + 30;
-  const closeMinutes = isWeekday ? 20 * 60 : 19 * 60;
+  const closeMinutes = isWeekday ? 21 * 60 : 20 * 60 + 30;
   const isOpen = bsAs.totalMinutes >= openMinutes && bsAs.totalMinutes < closeMinutes;
 
   return {
     isOpen,
     isWeekday,
     day: bsAs.weekday,
-    closesAt: isWeekday ? '20:00' : '19:00',
+    closesAt: isWeekday ? '21:00' : '20:30',
   };
 }
 
@@ -132,7 +132,7 @@ export function getAvailableReservationSlots(selectedIsoDate: string): string[] 
     const [slotH, slotM] = slot.split(':').map((n) => parseInt(n, 10));
     const slotMinutes = slotH * 60 + slotM;
 
-    if (isWeekend && slotMinutes > 18 * 60) {
+    if (isWeekend && slotMinutes > 19 * 60) {
       return false;
     }
 

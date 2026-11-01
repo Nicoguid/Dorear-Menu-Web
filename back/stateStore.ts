@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import fsPromises from 'node:fs/promises';
 import { INITIAL_MENU_ITEMS } from '../db/menuData';
-import { DEFAULT_STORE_SETTINGS } from '../db/storeSettings';
+import { CURRENT_STATE_VERSION, DEFAULT_STORE_SETTINGS } from '../db/storeSettings';
 import { WEEKLY_MENU_DISHES } from '../db/weeklyMenu';
 import {
   DorearSharedState,
@@ -17,7 +17,7 @@ let writeQueue: Promise<void> = Promise.resolve();
 
 export function buildServerDefaultState(): DorearSharedState {
   return {
-    version: 10,
+    version: CURRENT_STATE_VERSION,
     updatedAt: Date.now(),
     items: INITIAL_MENU_ITEMS,
     weeklyDishes: WEEKLY_MENU_DISHES,
@@ -51,7 +51,7 @@ export async function updateSharedState(
   const nextState: DorearSharedState | null = data
     ? {
         ...data,
-        version: 10,
+        version: CURRENT_STATE_VERSION,
         updatedAt: Date.now(),
       }
     : null;

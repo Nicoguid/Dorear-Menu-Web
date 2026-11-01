@@ -65,7 +65,7 @@ export const Footer: React.FC<FooterProps> = ({ currentLang }) => {
               <span className="text-emerald-800 font-semibold">
                 {currentLang === 'es' && `Abierto ahora · Cierra ${status.closesAt} h`}
                 {currentLang === 'en' &&
-                  `Open now · Closes ${status.isWeekday ? '8:00 PM' : '7:00 PM'}`}
+                  `Open now · Closes ${status.isWeekday ? '9:00 PM' : '8:30 PM'}`}
                 {currentLang === 'pt' && `Aberto agora · Fecha ${status.closesAt} h`}
               </span>
             ) : (
