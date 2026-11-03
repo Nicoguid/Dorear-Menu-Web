@@ -830,14 +830,14 @@ export const INITIAL_MENU_ITEMS: MenuItem[] = [
     "id": "item-1-6",
     "categoryId": "cat-1",
     "name": {
-      "es": "Cookie de chocolate y sal marina",
-      "en": "Dark Chocolate & Sea Salt Cookie",
-      "pt": "Cookie de Chocolate e Flor de Sal"
+      "es": "Cookies",
+      "en": "Cookies",
+      "pt": "Cookies"
     },
     "description": {
-      "es": "",
-      "en": "Soft baked cookie with 70% dark chocolate and sea salt.",
-      "pt": "Massa macia com chocolate 70% e flor de sal."
+      "es": "Consultar opciones disponibles.",
+      "en": "Ask for available options.",
+      "pt": "Consulte as opções disponíveis."
     },
     "price": 6000,
     "available": true,
