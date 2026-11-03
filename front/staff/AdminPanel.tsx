@@ -95,7 +95,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     e.preventDefault();
     const cleanPhone = localSettings.whatsappNumber.replace(/\D/g, '');
     if (cleanPhone.length < 8 || cleanPhone.length > 16) {
-      showError('Ingresá un número de WhatsApp válido con código de país (ej. 5491136458899).');
+      showError('Ingresá un número de WhatsApp válido con código de país (ej. 5492364351445).');
       return;
     }
     if (localSettings.groupMenuPricePerPerson <= 0) {
@@ -481,11 +481,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 onChange={(e) =>
                   setLocalSettings({ ...localSettings, whatsappNumber: e.target.value })
                 }
-                placeholder="5491136458899"
+                placeholder="5492364351445"
                 className="w-full min-h-[40px] bg-cream border border-line rounded-xl px-3 py-2 font-mono text-ink focus:border-wine focus:outline-none"
               />
               <span className="text-[10px] text-muted">
-                Ejemplo para CABA: 54911 + 8 dígitos (ej. 5491136458899)
+                Ejemplo para CABA: 54911 + 8 dígitos (ej. 5492364351445)
               </span>
             </div>
 

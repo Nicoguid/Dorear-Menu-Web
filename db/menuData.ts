@@ -948,7 +948,7 @@ export const INITIAL_MENU_ITEMS: MenuItem[] = [
       "pt": "Pão Rústico de Fermentação Natural"
     },
     "description": {
-      "es": "",
+      "es": "Acompañado con queso crema, mermelada y dulce de leche.",
       "en": "Served with artisan jam, dulce de leche and cream cheese.",
       "pt": "Servido com geléia artesanal, doce de leite e cream cheese."
     },
