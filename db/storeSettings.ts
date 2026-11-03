@@ -1,6 +1,6 @@
 import { StoreSettings } from './types';
 
-export const CURRENT_STATE_VERSION = 11;
+export const CURRENT_STATE_VERSION = 12;
 
 export const DEFAULT_STORE_SETTINGS: StoreSettings = {
   whatsappNumber: '5491136458899',
@@ -10,14 +10,14 @@ export const DEFAULT_STORE_SETTINGS: StoreSettings = {
 };
 
 export const STORAGE_KEYS = {
-  ITEMS: 'dorear_menu_items_v11',
-  WEEKLY: 'dorear_weekly_dishes_v11',
-  OVERRIDE: 'dorear_weekly_override_v11',
-  SETTINGS: 'dorear_store_settings_v11',
-  UPDATED_AT: 'dorear_state_updated_at_v11',
+  ITEMS: 'dorear_menu_items_v12',
+  WEEKLY: 'dorear_weekly_dishes_v12',
+  OVERRIDE: 'dorear_weekly_override_v12',
+  SETTINGS: 'dorear_store_settings_v12',
+  UPDATED_AT: 'dorear_state_updated_at_v12',
 } as const;
 
-export const BROADCAST_CHANNEL_NAME = 'dorear_realtime_sync_v11';
+export const BROADCAST_CHANNEL_NAME = 'dorear_realtime_sync_v12';
 
 export const PIN_SALT = 'dorear_sec_2026_';
 export const HASH_BARISTA = '5cb739bd8f2da1e12de0defd98467fffa765215a852dc04be0b7aad6e09b1ea9';

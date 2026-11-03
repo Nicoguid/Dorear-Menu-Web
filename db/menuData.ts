@@ -830,14 +830,14 @@ export const INITIAL_MENU_ITEMS: MenuItem[] = [
     "id": "item-1-6",
     "categoryId": "cat-1",
     "name": {
-      "es": "Cookies",
-      "en": "Cookies",
-      "pt": "Cookies"
+      "es": "Cookie",
+      "en": "Cookie",
+      "pt": "Cookie"
     },
     "description": {
-      "es": "Consultar opciones disponibles.",
-      "en": "Ask for available options.",
-      "pt": "Consulte as opções disponíveis."
+      "es": "Consultar opciones disponibles",
+      "en": "Consult available options",
+      "pt": "Consulte as opções disponíveis"
     },
     "price": 6000,
     "available": true,
