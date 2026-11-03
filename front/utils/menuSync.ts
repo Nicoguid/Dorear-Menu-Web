@@ -1,3 +1,5 @@
+import { supabase } from './supabaseClient';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 import { MenuItem, StoreSettings, WeeklyDish } from '../../db/types';
 import {
   BROADCAST_CHANNEL_NAME,
@@ -108,6 +110,16 @@ export function clearLocalStateSnapshot(): void {
       'dorear_weekly_override_v10',
       'dorear_store_settings_v10',
       'dorear_state_updated_at_v10',
+      'dorear_menu_items_v11',
+      'dorear_weekly_dishes_v11',
+      'dorear_weekly_override_v11',
+      'dorear_store_settings_v11',
+      'dorear_state_updated_at_v11',
+      'dorear_menu_items_v12',
+      'dorear_weekly_dishes_v12',
+      'dorear_weekly_override_v12',
+      'dorear_store_settings_v12',
+      'dorear_state_updated_at_v12',
     ];
     legacyKeys.forEach((k) => localStorage.removeItem(k));
   } catch (e) {
@@ -137,6 +149,32 @@ export function broadcastStateChange(
     headers['X-Dorear-Pin'] = staffPin;
   }
 
+  if (supabase) {
+    if ('reset' in state && state.reset) {
+      Promise.resolve(
+        supabase
+          .from('dorear_state')
+          .delete()
+          .eq('id', 'current')
+      ).catch(() => {});
+    } else {
+      const fullState = state as DorearSharedState;
+      Promise.resolve(
+        supabase
+          .from('dorear_state')
+          .upsert({
+            id: 'current',
+            state: fullState,
+            updated_at: fullState.updatedAt || Date.now(),
+          })
+      )
+        .then((res) => {
+          if (res?.error) console.warn('Supabase sync warning:', res.error.message);
+        })
+        .catch(() => {});
+    }
+  }
+
   fetch('/api/menu-state', {
     method: 'POST',
     headers,
@@ -163,6 +201,7 @@ export function subscribeToRealtimeSync(
   onSyncStatusChange?: (isLive: boolean) => void
 ): () => void {
   let bc: BroadcastChannel | null = null;
+  let supabaseChannel: RealtimeChannel | null = null;
   let eventSource: EventSource | null = null;
 
   const handlePayload = (payload: unknown) => {
@@ -177,6 +216,54 @@ export function subscribeToRealtimeSync(
       onReceiveState(validated);
     }
   };
+
+  if (supabase) {
+    const client = supabase;
+    Promise.resolve(
+      client
+        .from('dorear_state')
+        .select('state, updated_at')
+        .eq('id', 'current')
+        .maybeSingle()
+    )
+      .then((res) => {
+        if (!res?.error && res?.data && res.data.state) {
+          onSyncStatusChange?.(true);
+          handlePayload(res.data.state);
+        }
+      })
+      .catch(() => {});
+
+    supabaseChannel = client
+      .channel('dorear_realtime_menu')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'dorear_state',
+          filter: 'id=eq.current',
+        },
+        (payload) => {
+          onSyncStatusChange?.(true);
+          if (payload.eventType === 'DELETE') {
+            onReset();
+            return;
+          }
+          const row = payload.new as { state?: unknown } | null;
+          if (row && row.state) {
+            handlePayload(row.state);
+          }
+        }
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          onSyncStatusChange?.(true);
+        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          onSyncStatusChange?.(false);
+        }
+      });
+  }
 
   fetch('/api/menu-state', { cache: 'no-store' })
     .then((res) => {
@@ -226,5 +313,8 @@ export function subscribeToRealtimeSync(
   return () => {
     if (bc) bc.close();
     if (eventSource) eventSource.close();
+    if (supabaseChannel && supabase) {
+      supabase.removeChannel(supabaseChannel);
+    }
   };
 }
