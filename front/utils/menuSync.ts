@@ -173,26 +173,26 @@ export function broadcastStateChange(
         })
         .catch(() => {});
     }
-  }
-
-  fetch('/api/menu-state', {
-    method: 'POST',
-    headers,
-    body: JSON.stringify(state),
-  })
-    .then(async (res) => {
-      if (!res.ok) return;
-      const contentType = res.headers.get('content-type') || '';
-      if (!contentType.includes('application/json')) return;
-      const data = await res.json();
-      if (data && data.state) {
-        const validated = validateSharedStatePayload(data.state);
-        if (validated) {
-          saveLocalStateSnapshot(validated);
-        }
-      }
+  } else {
+    fetch('/api/menu-state', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(state),
     })
-    .catch(() => {});
+      .then(async (res) => {
+        if (!res.ok) return;
+        const contentType = res.headers.get('content-type') || '';
+        if (!contentType.includes('application/json')) return;
+        const data = await res.json();
+        if (data && data.state) {
+          const validated = validateSharedStatePayload(data.state);
+          if (validated) {
+            saveLocalStateSnapshot(validated);
+          }
+        }
+      })
+      .catch(() => {});
+  }
 }
 
 export function subscribeToRealtimeSync(
@@ -263,43 +263,43 @@ export function subscribeToRealtimeSync(
           onSyncStatusChange?.(false);
         }
       });
-  }
-
-  fetch('/api/menu-state', { cache: 'no-store' })
-    .then((res) => {
-      const contentType = res.headers.get('content-type') || '';
-      if (res.ok && contentType.includes('application/json')) {
-        onSyncStatusChange?.(true);
-        return res.json();
-      }
-      onSyncStatusChange?.(false);
-      return null;
-    })
-    .then((data) => {
-      if (data && data.state) {
-        handlePayload(data.state);
-      }
-    })
-    .catch(() => {
-      onSyncStatusChange?.(false);
-    });
-
-  try {
-    if ('EventSource' in window) {
-      eventSource = new EventSource('/api/menu-stream');
-      eventSource.onopen = () => {
-        onSyncStatusChange?.(true);
-      };
-      eventSource.onerror = () => {
+  } else {
+    fetch('/api/menu-state', { cache: 'no-store' })
+      .then((res) => {
+        const contentType = res.headers.get('content-type') || '';
+        if (res.ok && contentType.includes('application/json')) {
+          onSyncStatusChange?.(true);
+          return res.json();
+        }
         onSyncStatusChange?.(false);
-      };
-      eventSource.onmessage = (event) => {
-        try {
-          handlePayload(JSON.parse(event.data));
-        } catch {}
-      };
-    }
-  } catch {}
+        return null;
+      })
+      .then((data) => {
+        if (data && data.state) {
+          handlePayload(data.state);
+        }
+      })
+      .catch(() => {
+        onSyncStatusChange?.(false);
+      });
+
+    try {
+      if ('EventSource' in window) {
+        eventSource = new EventSource('/api/menu-stream');
+        eventSource.onopen = () => {
+          onSyncStatusChange?.(true);
+        };
+        eventSource.onerror = () => {
+          onSyncStatusChange?.(false);
+        };
+        eventSource.onmessage = (event) => {
+          try {
+            handlePayload(JSON.parse(event.data));
+          } catch {}
+        };
+      }
+    } catch {}
+  }
 
   try {
     if ('BroadcastChannel' in window) {
