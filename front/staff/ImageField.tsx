@@ -1,4 +1,4 @@
-import React, { useEffect, useId, useRef, useState } from 'react';
+import React, { useEffect, useId, useState } from 'react';
 import { Image as ImageIcon, Loader2, Upload } from 'lucide-react';
 import { getOptimizedImageUrl } from '../utils/imageUrl';
 import { uploadProductImage } from '../utils/imageUpload';
@@ -23,7 +23,7 @@ export const ImageField: React.FC<ImageFieldProps> = ({
   previewAlt = 'Vista previa del plato',
 }) => {
   const inputId = useId();
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const fileInputId = useId();
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [previewFailed, setPreviewFailed] = useState(false);
@@ -79,18 +79,19 @@ export const ImageField: React.FC<ImageFieldProps> = ({
 
         <div className="flex-1 min-w-0 space-y-1.5">
           <input
-            ref={fileInputRef}
+            id={fileInputId}
             type="file"
             accept="image/*"
+            disabled={isUploading}
             onChange={handleFileSelected}
             className="sr-only"
-            aria-label="Seleccionar foto desde el dispositivo"
           />
-          <button
-            type="button"
-            disabled={isUploading}
-            onClick={() => fileInputRef.current?.click()}
-            className="w-full min-h-[38px] px-3 py-2 rounded-lg bg-wine/10 hover:bg-wine/15 border border-wine/30 text-wine font-medium flex items-center justify-center gap-2 transition-colors disabled:opacity-60"
+          <label
+            htmlFor={fileInputId}
+            aria-disabled={isUploading}
+            className={`w-full min-h-[38px] px-3 py-2 rounded-lg bg-wine/10 hover:bg-wine/15 border border-wine/30 text-wine font-medium flex items-center justify-center gap-2 transition-colors cursor-pointer ${
+              isUploading ? 'pointer-events-none opacity-60' : ''
+            }`}
           >
             {isUploading ? (
               <>
@@ -103,7 +104,7 @@ export const ImageField: React.FC<ImageFieldProps> = ({
                 <span>Subir foto del celular o PC</span>
               </>
             )}
-          </button>
+          </label>
           <p className="text-[10px] text-muted leading-tight">
             JPG, PNG o WebP · Se comprime sola antes de guardarse.
           </p>
