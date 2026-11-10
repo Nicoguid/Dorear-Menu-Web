@@ -6,6 +6,7 @@ import { ModalDialog } from './ModalDialog';
 import {
   evaluateDishDietarySafety,
   formatArsPrice,
+  formatDishTitle,
   formatSignedPriceDelta,
 } from '../utils/securityAndFormat';
 import { getOptimizedImageUrl, getResponsiveImageSrcSet } from '../utils/imageUrl';
@@ -109,7 +110,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
               id={titleId}
               className="font-serif text-3xl sm:text-4xl text-ink font-medium leading-tight"
             >
-              {item.name[currentLang]}
+              {formatDishTitle(item.name[currentLang])}
             </h2>
 
             {safety.effectiveDietary.length > 0 && (

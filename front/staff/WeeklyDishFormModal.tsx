@@ -4,10 +4,12 @@ import { Globe, X } from 'lucide-react';
 import { ModalDialog } from '../modals/ModalDialog';
 import {
   buildLocalizedString,
+  formatDishTitle,
   isSafeImageUrl,
   parseArsPrice,
 } from '../utils/securityAndFormat';
 import { LanguageTabs } from './ItemFormModal';
+import { ImageField } from './ImageField';
 
 interface WeeklyDishFormModalProps {
   dish: WeeklyDish;
@@ -44,9 +46,11 @@ export const WeeklyDishFormModal: React.FC<WeeklyDishFormModalProps> = ({
     dish.dietary?.includes('sin_lactosa') || false
   );
   const [formError, setFormError] = useState<string | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (isUploadingImage) return;
     const dineIn = parseArsPrice(priceDineIn);
     const takeAway = parseArsPrice(priceTakeAway);
 
@@ -85,7 +89,12 @@ export const WeeklyDishFormModal: React.FC<WeeklyDishFormModalProps> = ({
 
     onSave({
       ...dish,
-      title: buildLocalizedString(titles.es, dish.title, titles.en, titles.pt),
+      title: buildLocalizedString(
+        formatDishTitle(titles.es),
+        dish.title,
+        formatDishTitle(titles.en),
+        formatDishTitle(titles.pt)
+      ),
       description: buildLocalizedString(descs.es, dish.description, descs.en, descs.pt),
       priceDineIn: dineIn,
       priceTakeAway: takeAway,
@@ -196,16 +205,13 @@ export const WeeklyDishFormModal: React.FC<WeeklyDishFormModalProps> = ({
           </div>
         </div>
 
-        <div>
-          <label className="block text-muted font-medium mb-1">URL de la foto del plato</label>
-          <input
-            type="url"
-            value={imageUrl}
-            onChange={(e) => setImageUrl(e.target.value)}
-            placeholder="https://images.unsplash.com/..."
-            className="w-full min-h-[38px] bg-cream border border-line rounded-xl px-3 py-2 text-ink focus:border-wine focus:outline-none"
-          />
-        </div>
+        <ImageField
+          label="Foto del plato del día"
+          imageUrl={imageUrl}
+          onChange={setImageUrl}
+          onUploadingChange={setIsUploadingImage}
+          previewAlt={titles.es || 'Vista previa del plato del día'}
+        />
 
         <div className="pt-2 border-t border-line/60">
           <span className="block text-muted font-medium mb-2">Etiquetas dietarias:</span>
@@ -258,7 +264,8 @@ export const WeeklyDishFormModal: React.FC<WeeklyDishFormModalProps> = ({
           </button>
           <button
             type="submit"
-            className="min-h-[38px] px-5 py-2 rounded-xl bg-wine hover:bg-wine-dark text-white font-medium shadow-xs"
+            disabled={isUploadingImage}
+            className="min-h-[38px] px-5 py-2 rounded-xl bg-wine hover:bg-wine-dark text-white font-medium shadow-xs disabled:opacity-50"
           >
             Guardar Día
           </button>

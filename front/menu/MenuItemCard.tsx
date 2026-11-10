@@ -1,7 +1,7 @@
 import React from 'react';
 import { Language, MenuItem } from '../../db/types';
 import { DietaryIcons } from './DietaryIcons';
-import { formatArsPrice } from '../utils/securityAndFormat';
+import { formatArsPrice, formatDishTitle } from '../utils/securityAndFormat';
 
 interface MenuItemCardProps {
   item: MenuItem;
@@ -25,18 +25,20 @@ export const MenuItemCard: React.FC<MenuItemCardProps> = ({
     currentLang === 'es' ? 'Agotado' : currentLang === 'en' ? 'Sold Out' : 'Esgotado';
   const statusLabel = item.available ? formatArsPrice(item.price) : soldOutLabel;
 
+  const formattedName = formatDishTitle(item.name[currentLang]);
+
   return (
     <article
       role="button"
       tabIndex={0}
-      aria-label={`${item.name[currentLang]} · ${statusLabel}`}
+      aria-label={`${formattedName} · ${statusLabel}`}
       onClick={() => onOpenDetail(item)}
       onKeyDown={handleKeyDown}
       className="group min-h-[48px] py-4 border-b border-line/70 flex justify-between items-start gap-4 cursor-pointer hover:bg-paper/40 transition-colors px-2 rounded-xl -mx-2"
     >
       <div className="flex-1 min-w-0 pr-1">
         <h3 className="font-serif text-2xl sm:text-3xl text-ink font-medium leading-snug group-hover:text-gold transition-colors inline-flex items-center gap-2 flex-wrap">
-          <span>{item.name[currentLang]}</span>
+          <span>{formattedName}</span>
           {item.dietary && item.dietary.length > 0 && (
             <DietaryIcons tags={item.dietary} currentLang={currentLang} size="md" />
           )}

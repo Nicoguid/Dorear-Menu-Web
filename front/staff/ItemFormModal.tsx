@@ -8,8 +8,10 @@ import {
 } from '../../db/types';
 import { Globe, X } from 'lucide-react';
 import { ModalDialog } from '../modals/ModalDialog';
+import { ImageField } from './ImageField';
 import {
   buildLocalizedString,
+  formatDishTitle,
   isSafeImageUrl,
   parseArsPrice,
 } from '../utils/securityAndFormat';
@@ -89,9 +91,11 @@ export const ItemFormModal: React.FC<ItemFormModalProps> = ({
     item?.allergens?.includes('frutos_secos') || false
   );
   const [formError, setFormError] = useState<string | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (isUploadingImage) return;
     const cleanPrice = parseArsPrice(price);
     if (!names.es.trim()) {
       setActiveTab('es');
@@ -138,7 +142,12 @@ export const ItemFormModal: React.FC<ItemFormModalProps> = ({
     onSave({
       id: item ? item.id : generatedId,
       categoryId,
-      name: buildLocalizedString(names.es, item?.name, names.en, names.pt),
+      name: buildLocalizedString(
+        formatDishTitle(names.es),
+        item?.name,
+        formatDishTitle(names.en),
+        formatDishTitle(names.pt)
+      ),
       description: buildLocalizedString(descs.es, item?.description, descs.en, descs.pt),
       price: cleanPrice,
       available: isAvailable,
@@ -256,16 +265,13 @@ export const ItemFormModal: React.FC<ItemFormModalProps> = ({
           </div>
         </div>
 
-        <div>
-          <label className="block text-muted font-medium mb-1">URL de la foto gourmet</label>
-          <input
-            type="url"
-            value={imageUrl}
-            onChange={(e) => setImageUrl(e.target.value)}
-            placeholder="https://images.unsplash.com/..."
-            className="w-full min-h-[38px] bg-cream border border-line rounded-xl px-3 py-2 text-ink focus:border-wine focus:outline-none"
-          />
-        </div>
+        <ImageField
+          label="Foto del plato"
+          imageUrl={imageUrl}
+          onChange={setImageUrl}
+          onUploadingChange={setIsUploadingImage}
+          previewAlt={names.es || 'Vista previa del plato'}
+        />
 
         <div className="pt-2 border-t border-line/60">
           <span className="block text-muted font-medium mb-2">
@@ -342,7 +348,8 @@ export const ItemFormModal: React.FC<ItemFormModalProps> = ({
           </button>
           <button
             type="submit"
-            className="min-h-[38px] px-5 py-2 rounded-xl bg-wine hover:bg-wine-dark text-white font-medium shadow-xs"
+            disabled={isUploadingImage}
+            className="min-h-[38px] px-5 py-2 rounded-xl bg-wine hover:bg-wine-dark text-white font-medium shadow-xs disabled:opacity-50"
           >
             {item ? 'Guardar Cambios' : 'Agregar a la Carta'}
           </button>

@@ -6,7 +6,7 @@ import {
   StoreSettings,
 } from '../../db/types';
 import { DietaryIcons } from '../menu/DietaryIcons';
-import { parseArsPrice } from '../utils/securityAndFormat';
+import { formatDishTitle, parseArsPrice } from '../utils/securityAndFormat';
 import { getOptimizedImageUrl } from '../utils/imageUrl';
 import { ItemFormModal } from './ItemFormModal';
 import { WeeklyDishFormModal } from './WeeklyDishFormModal';
@@ -261,7 +261,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                       {dish.dayName.es}
                     </span>
                     <span className="text-xs font-medium text-ink truncate">
-                      {dish.title.es}
+                      {formatDishTitle(dish.title.es)}
                     </span>
                     {dish.dietary && dish.dietary.length > 0 && (
                       <DietaryIcons tags={dish.dietary} currentLang="es" size="sm" />
@@ -372,7 +372,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <h4 className="font-serif text-lg font-medium text-ink leading-tight truncate">
-                      {item.name.es}
+                      {formatDishTitle(item.name.es)}
                     </h4>
                     {item.dietary && item.dietary.length > 0 && (
                       <DietaryIcons tags={item.dietary} currentLang="es" size="sm" />

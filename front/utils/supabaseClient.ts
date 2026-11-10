@@ -7,6 +7,10 @@ const SUPABASE_ANON_KEY =
   (typeof import.meta !== 'undefined' && import.meta.env?.VITE_SUPABASE_ANON_KEY) ||
   'sb_publishable_WUAIY6_zm2cTS7uvm4GMAA_f3PKt6GD';
 
+export const SUPABASE_IMAGES_BUCKET =
+  (typeof import.meta !== 'undefined' && import.meta.env?.VITE_SUPABASE_IMAGES_BUCKET) ||
+  'menu-images';
+
 export const isSupabaseConfigured = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
 
 export const supabase = isSupabaseConfigured

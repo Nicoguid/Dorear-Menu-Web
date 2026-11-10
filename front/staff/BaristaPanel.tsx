@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { MenuCategory, MenuItem } from '../../db/types';
 import { ArrowLeft, Search, Coffee, CheckCircle2, XCircle, Radio } from 'lucide-react';
 import { DietaryIcons } from '../menu/DietaryIcons';
+import { formatDishTitle } from '../utils/securityAndFormat';
 
 interface BaristaPanelProps {
   categories: MenuCategory[];
@@ -132,7 +133,7 @@ export const BaristaPanel: React.FC<BaristaPanelProps> = ({
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <h4 className="font-serif text-lg font-medium text-ink leading-tight">
-                    {item.name.es}
+                    {formatDishTitle(item.name.es)}
                   </h4>
                   {item.dietary && item.dietary.length > 0 && (
                     <DietaryIcons tags={item.dietary} currentLang="es" size="sm" />

@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { DietaryTag, Language, WeeklyDish } from '../../db/types';
-import { ChevronDown, Utensils, ShoppingBag, Sparkles, ChefHat } from 'lucide-react';
+import { ChevronDown, Utensils, ShoppingBag, ChefHat } from 'lucide-react';
 import { DietaryIcons } from './DietaryIcons';
 import { getBuenosAiresNow } from '../utils/buenosAiresTime';
-import { formatArsPrice } from '../utils/securityAndFormat';
+import { formatArsPrice, formatDishTitle } from '../utils/securityAndFormat';
 import { getOptimizedImageUrl } from '../utils/imageUrl';
 
 interface WeeklyMenuPillProps {
@@ -34,16 +34,23 @@ export const WeeklyMenuPill: React.FC<WeeklyMenuPillProps> = ({
   return (
     <section className="w-full max-w-xl mx-auto px-4 my-3.5 select-none animate-fade-in" aria-label="Menú Ejecutivo Semanal">
       <div className="bg-gradient-to-b from-paper to-cream/90 rounded-3xl border-2 border-gold/35 shadow-soft overflow-hidden transition-all duration-300 relative">
-        <div className="bg-wine text-white px-4 py-2 flex items-center justify-between text-xs">
-          <div className="flex items-center gap-2 font-medium tracking-wide">
-            <ChefHat size={15} className="text-gold-light" />
-            <span className="font-serif italic text-sm tracking-normal">
-              {currentLang === 'es' && 'Menú Ejecutivo del Mediodía'}
-              {currentLang === 'en' && 'Executive Lunch Special'}
-              {currentLang === 'pt' && 'Menu Executivo do Almoço'}
-            </span>
+        <div className="bg-wine text-white px-4 py-2 flex items-center justify-between gap-2 text-xs">
+          <div className="flex items-center gap-2 font-medium tracking-wide min-w-0">
+            <ChefHat size={15} className="text-gold-light shrink-0" />
+            <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 leading-tight">
+              <span className="font-serif italic text-sm tracking-normal">
+                {currentLang === 'es' && 'Menú Ejecutivo del Mediodía'}
+                {currentLang === 'en' && 'Executive Lunch Special'}
+                {currentLang === 'pt' && 'Menu Executivo do Almoço'}
+              </span>
+              <span className="text-[11px] font-sans font-normal text-gold-light/95">
+                {currentLang === 'es' && 'Sugerencias de la chef: Mariela Martínez'}
+                {currentLang === 'en' && "Chef's suggestions: Mariela Martínez"}
+                {currentLang === 'pt' && 'Sugestões da chef: Mariela Martínez'}
+              </span>
+            </div>
           </div>
-          <span className="text-[10px] tracking-wider uppercase font-semibold text-gold-light">
+          <span className="text-[10px] tracking-wider uppercase font-semibold text-gold-light shrink-0">
             {currentLang === 'es' && 'Lunes a Viernes'}
             {currentLang === 'en' && 'Mon to Fri'}
             {currentLang === 'pt' && 'Seg a Sex'}
@@ -54,7 +61,6 @@ export const WeeklyMenuPill: React.FC<WeeklyMenuPillProps> = ({
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-3">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="inline-flex items-center gap-1 text-[11px] uppercase font-sans font-bold tracking-wider px-2.5 py-1 rounded-full bg-gold/20 text-gold-dark border border-gold/30">
-                <Sparkles size={11} className="text-gold" />
                 {isWeekend
                   ? currentLang === 'es'
                     ? 'Plato Sugerido del Finde'
@@ -109,7 +115,7 @@ export const WeeklyMenuPill: React.FC<WeeklyMenuPillProps> = ({
 
             <div className="flex-1 min-w-0 pr-1">
               <h3 className="font-serif text-lg sm:text-xl font-medium text-ink leading-snug group-hover:text-wine transition-colors">
-                {todayDish.title[currentLang]}
+                {formatDishTitle(todayDish.title[currentLang])}
               </h3>
               <p className="text-xs text-muted leading-relaxed line-clamp-2 mt-0.5">
                 {todayDish.description[currentLang]}
@@ -215,7 +221,7 @@ export const WeeklyMenuPill: React.FC<WeeklyMenuPillProps> = ({
                             {dish.dayName[currentLang]}
                           </span>
                           <h4 className="font-serif text-base font-medium text-ink truncate">
-                            {dish.title[currentLang]}
+                            {formatDishTitle(dish.title[currentLang])}
                           </h4>
                           {dish.dietary && dish.dietary.length > 0 && (
                             <DietaryIcons

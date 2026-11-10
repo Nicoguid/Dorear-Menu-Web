@@ -75,6 +75,16 @@ export function openWhatsAppChat(whatsappNumber: string, message: string): void 
   window.open(url, '_blank', 'noopener,noreferrer');
 }
 
+export function formatDishTitle(rawTitle: string): string {
+  const trimmed = rawTitle.trim().replace(/\s+/g, ' ');
+  if (!trimmed) return '';
+  return trimmed
+    .toLocaleLowerCase('es-AR')
+    .replace(/(^|[\s(/\-"¿¡])(\p{L})/gu, (_match, prefix: string, letter: string) =>
+      `${prefix}${letter.toLocaleUpperCase('es-AR')}`
+    );
+}
+
 export function buildLocalizedString(
   esInput: string,
   previous?: LocalizedString,
