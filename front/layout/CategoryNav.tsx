@@ -112,7 +112,7 @@ export const CategoryNav: React.FC<CategoryNavProps> = ({
                 }`}
                 aria-pressed={isActive}
               >
-                {cat.name[currentLang]}
+                {cat.name[currentLang] || cat.name.es}
               </button>
             );
           })}

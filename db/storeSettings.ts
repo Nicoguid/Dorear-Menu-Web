@@ -11,6 +11,7 @@ export const DEFAULT_STORE_SETTINGS: StoreSettings = {
 
 export const STORAGE_KEYS = {
   ITEMS: 'dorear_menu_items_v13',
+  CATEGORIES: 'dorear_categories_v13',
   WEEKLY: 'dorear_weekly_dishes_v13',
   OVERRIDE: 'dorear_weekly_override_v13',
   SETTINGS: 'dorear_store_settings_v13',

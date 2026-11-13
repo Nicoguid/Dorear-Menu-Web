@@ -1,0 +1,97 @@
+1
+00:00:00,000 --> 00:00:03,900
+Dorear · Tu carta digital
+
+2
+00:00:04,000 --> 00:00:09,900
+Ingresá con tu acceso.
+El PIN define el rol: barra o administración.
+
+3
+00:00:10,000 --> 00:00:14,900
+Control de barra.
+Consultá productos y disponibilidad.
+
+4
+00:00:15,000 --> 00:00:19,900
+Encontrá el producto.
+Buscá por nombre o filtrá por categoría.
+
+5
+00:00:20,000 --> 00:00:25,900
+Marcá lo agotado.
+Un toque cambia Disponible a Agotado.
+
+6
+00:00:26,000 --> 00:00:30,900
+Así lo ve el cliente.
+El estado se refleja en la carta sincronizada.
+
+7
+00:00:31,000 --> 00:00:35,900
+Gestión del local.
+El acceso de administración abre más controles.
+
+8
+00:00:36,000 --> 00:00:41,900
+Editá el menú semanal.
+Cambiá textos, traducciones, foto y precios.
+
+9
+00:00:42,000 --> 00:00:46,900
+Elegí el plato destacado.
+Usá el calendario o fijá un día manualmente.
+
+10
+00:00:47,000 --> 00:00:50,900
+Administrá la carta.
+Navegá por categorías o creá un nuevo plato.
+
+11
+00:00:51,000 --> 00:00:55,900
+Actualizá un precio.
+Escribí el nuevo valor junto al producto.
+
+12
+00:00:56,000 --> 00:00:59,900
+Guardá el cambio.
+Tocá el ícono de guardar para aplicarlo.
+
+13
+00:01:00,000 --> 00:01:05,900
+Agregá un producto.
+Completá nombre, descripción, precio y categoría.
+
+14
+00:01:06,000 --> 00:01:10,900
+Cargá sus traducciones.
+Editá los textos en ES, EN y PT.
+
+15
+00:01:11,000 --> 00:01:16,900
+Foto y etiquetas.
+Configurá foto, filtros, frutos secos y disponibilidad.
+
+16
+00:01:17,000 --> 00:01:20,900
+Corregí los datos.
+El lápiz permite editar un plato ya creado.
+
+17
+00:01:21,000 --> 00:01:24,900
+Eliminá si hace falta.
+La papelera pide confirmación antes de eliminar.
+
+18
+00:01:25,000 --> 00:01:31,900
+Ajustá el local.
+WhatsApp, Wi-Fi y precio de la merienda grupal.
+
+19
+00:01:32,000 --> 00:01:37,900
+Restaurá los originales.
+El botón de restauración pide confirmación.
+
+20
+00:01:38,000 --> 00:01:41,900
+Dorear · Guía para el equipo

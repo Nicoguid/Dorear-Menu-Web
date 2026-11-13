@@ -1,13 +1,15 @@
 import { supabase } from './supabaseClient';
 import type { RealtimeChannel } from '@supabase/supabase-js';
-import { MenuItem, StoreSettings, WeeklyDish } from '../../db/types';
+import { MenuCategory, MenuItem, StoreSettings, WeeklyDish } from '../../db/types';
 import {
   BROADCAST_CHANNEL_NAME,
   CURRENT_STATE_VERSION,
   STORAGE_KEYS,
 } from '../../db/storeSettings';
+import { CATEGORIES } from '../../db/menuData';
 import {
   DorearSharedState,
+  isValidCategoryArray,
   isValidMenuItemArray,
   isValidStoreSettings,
   isValidWeeklyDishArray,
@@ -17,15 +19,25 @@ import {
 export type { DorearSharedState };
 
 export function loadValidatedLocalState(defaults: {
+  categories?: MenuCategory[];
   items: MenuItem[];
   weeklyDishes: WeeklyDish[];
   storeSettings: StoreSettings;
 }): DorearSharedState {
+  let categories = defaults.categories || CATEGORIES;
   let items = defaults.items;
   let weeklyDishes = defaults.weeklyDishes;
   let weeklyOverrideDay: number | null = null;
   let storeSettings = defaults.storeSettings;
   let updatedAt = 0;
+
+  try {
+    const rawCategories = localStorage.getItem(STORAGE_KEYS.CATEGORIES);
+    if (rawCategories) {
+      const parsed = JSON.parse(rawCategories);
+      if (isValidCategoryArray(parsed)) categories = parsed;
+    }
+  } catch {}
 
   try {
     const rawItems = localStorage.getItem(STORAGE_KEYS.ITEMS);
@@ -74,6 +86,7 @@ export function loadValidatedLocalState(defaults: {
   return {
     version: CURRENT_STATE_VERSION,
     updatedAt,
+    categories,
     items,
     weeklyDishes,
     weeklyOverrideDay,
@@ -83,6 +96,9 @@ export function loadValidatedLocalState(defaults: {
 
 export function saveLocalStateSnapshot(state: DorearSharedState): void {
   try {
+    if (state.categories) {
+      localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(state.categories));
+    }
     localStorage.setItem(STORAGE_KEYS.ITEMS, JSON.stringify(state.items));
     localStorage.setItem(STORAGE_KEYS.WEEKLY, JSON.stringify(state.weeklyDishes));
     if (state.weeklyOverrideDay === null) {

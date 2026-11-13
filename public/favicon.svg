@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#EED596"/>
+      <stop offset="50%" stop-color="#C5A059"/>
+      <stop offset="100%" stop-color="#9C7332"/>
+    </linearGradient>
+    <linearGradient id="wine" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6F242C"/>
+      <stop offset="100%" stop-color="#4A141A"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Fondo redondeado suave y distinguido -->
+  <rect x="4" y="4" width="120" height="120" rx="32" fill="url(#wine)" stroke="url(#gold)" stroke-width="3"/>
+
+  <!-- Cápsula / Óvalo emblema de Agustina Ramírez -->
+  <rect x="38" y="16" width="52" height="96" rx="26" fill="none" stroke="url(#gold)" stroke-width="2.8"/>
+
+  <!-- Letra A -->
+  <text x="64" y="37" font-family="'Cormorant Garamond', Georgia, serif" font-size="19" font-weight="700" fill="url(#gold)" text-anchor="middle" letter-spacing="1">A</text>
+
+  <!-- Batidor de alambre artesanal -->
+  <g stroke="url(#gold)" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <ellipse cx="64" cy="62" rx="13" ry="14" stroke-width="2"/>
+    <ellipse cx="64" cy="62" rx="6.5" ry="14" stroke-width="1.8"/>
+    <line x1="64" y1="48" x2="64" y2="76" stroke-width="2"/>
+    <!-- Collar del batidor -->
+    <rect x="59.5" y="76" width="9" height="3" rx="1" fill="url(#gold)" stroke="none"/>
+    <!-- Mango del batidor -->
+    <rect x="61.5" y="79" width="5" height="11" rx="2" stroke-width="1.8" fill="url(#gold)"/>
+  </g>
+
+  <!-- Letra R -->
+  <text x="64" y="106" font-family="'Cormorant Garamond', Georgia, serif" font-size="19" font-weight="700" fill="url(#gold)" text-anchor="middle" letter-spacing="1">R</text>
+</svg>

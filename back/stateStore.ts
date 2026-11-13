@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import fsPromises from 'node:fs/promises';
-import { INITIAL_MENU_ITEMS } from '../db/menuData';
+import { CATEGORIES, INITIAL_MENU_ITEMS } from '../db/menuData';
 import { CURRENT_STATE_VERSION, DEFAULT_STORE_SETTINGS } from '../db/storeSettings';
 import { WEEKLY_MENU_DISHES } from '../db/weeklyMenu';
 import {
@@ -19,6 +19,7 @@ export function buildServerDefaultState(): DorearSharedState {
   return {
     version: CURRENT_STATE_VERSION,
     updatedAt: Date.now(),
+    categories: CATEGORIES,
     items: INITIAL_MENU_ITEMS,
     weeklyDishes: WEEKLY_MENU_DISHES,
     weeklyOverrideDay: null,
@@ -99,5 +100,5 @@ export async function applyBaristaStateUpdate(
     items: updatedItems,
   });
 
-  return saved || { ...baseState, items: updatedItems, updatedAt: Date.now() };
+  return saved || baseState;
 }

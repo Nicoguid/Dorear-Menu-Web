@@ -8,6 +8,7 @@ import {
   openWhatsAppChat,
   sanitizeWhatsAppInput,
 } from '../utils/securityAndFormat';
+import { trackWhatsAppClick } from '../utils/analytics';
 
 interface GroupReservationModalProps {
   isOpen: boolean;
@@ -148,6 +149,7 @@ export const GroupReservationModal: React.FC<GroupReservationModalProps> = ({
       msg += `\nEnvio em anexo o comprovante da transferência do sinal para confirmar a mesa. Muito obrigado(a)! ✨`;
     }
 
+    trackWhatsAppClick('group_reservation');
     openWhatsAppChat(settings.whatsappNumber, msg);
     onClose();
   };

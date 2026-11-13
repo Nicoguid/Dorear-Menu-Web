@@ -2,16 +2,19 @@ import {
   AllergenTag,
   DietaryTag,
   LocalizedString,
+  MenuCategory,
   MenuItem,
   ProductModifier,
   StoreSettings,
   WeeklyDish,
 } from './types';
 import { CURRENT_STATE_VERSION } from './storeSettings';
+import { CATEGORIES } from './menuData';
 
 export interface DorearSharedState {
   version: number;
   updatedAt: number;
+  categories?: MenuCategory[];
   items: MenuItem[];
   weeklyDishes: WeeklyDish[];
   weeklyOverrideDay: number | null;
@@ -89,6 +92,24 @@ export function isValidModifierArray(val: unknown): val is ProductModifier[] {
       Math.abs(m.price) <= 10_000_000 &&
       (m.invalidatesDietary === undefined || isValidDietaryArray(m.invalidatesDietary)) &&
       (m.allergens === undefined || isValidAllergenArray(m.allergens))
+    );
+  });
+}
+
+export function isValidCategoryArray(data: unknown): data is MenuCategory[] {
+  if (!Array.isArray(data) || data.length === 0 || data.length > 60) return false;
+  return data.every((raw) => {
+    if (!raw || typeof raw !== 'object') return false;
+    const cat = raw as Record<string, unknown>;
+    return (
+      typeof cat.id === 'string' &&
+      cat.id.trim().length > 0 &&
+      cat.id.length <= 64 &&
+      typeof cat.order === 'number' &&
+      Number.isFinite(cat.order) &&
+      isValidLocalizedString(cat.name) &&
+      cat.name.es.trim().length > 0 &&
+      isValidLocalizedString(cat.description)
     );
   });
 }
@@ -181,6 +202,8 @@ export function validateSharedStatePayload(payload: unknown): DorearSharedState 
     return null;
   }
 
+  const categories = isValidCategoryArray(data.categories) ? data.categories : CATEGORIES;
+
   const override =
     typeof data.weeklyOverrideDay === 'number' &&
     Number.isInteger(data.weeklyOverrideDay) &&
@@ -195,6 +218,7 @@ export function validateSharedStatePayload(payload: unknown): DorearSharedState 
       typeof data.updatedAt === 'number' && Number.isFinite(data.updatedAt) && data.updatedAt > 0
         ? data.updatedAt
         : Date.now(),
+    categories,
     items: data.items,
     weeklyDishes: data.weeklyDishes,
     weeklyOverrideDay: override,

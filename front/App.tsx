@@ -2,6 +2,7 @@ import { useState, useEffect, lazy, Suspense, useCallback } from 'react';
 import {
   Language,
   DietaryTag,
+  MenuCategory,
   MenuItem,
   WeeklyDish,
   StoreSettings,
@@ -35,6 +36,15 @@ import {
   subscribeToRealtimeSync,
 } from './utils/menuSync';
 import { openWhatsAppChat } from './utils/securityAndFormat';
+import {
+  trackCategoryChange,
+  trackDietaryFilterChange,
+  trackLanguageChange,
+  trackProductClick,
+  trackWeeklyDishClick,
+  trackWhatsAppClick,
+  trackWifiModalOpen,
+} from './utils/analytics';
 
 const BaristaPanel = lazy(() =>
   import('./staff/BaristaPanel').then((m) => ({ default: m.BaristaPanel }))
@@ -47,6 +57,7 @@ function buildDefaultState(): DorearSharedState {
   return {
     version: CURRENT_STATE_VERSION,
     updatedAt: Date.now(),
+    categories: CATEGORIES,
     items: INITIAL_MENU_ITEMS,
     weeklyDishes: WEEKLY_MENU_DISHES,
     weeklyOverrideDay: null,
@@ -66,13 +77,20 @@ export function App() {
 
   const [sharedState, setSharedState] = useState<DorearSharedState>(() =>
     loadValidatedLocalState({
+      categories: CATEGORIES,
       items: INITIAL_MENU_ITEMS,
       weeklyDishes: WEEKLY_MENU_DISHES,
       storeSettings: DEFAULT_STORE_SETTINGS,
     })
   );
 
-  const { items, weeklyDishes, weeklyOverrideDay, storeSettings } = sharedState;
+  const {
+    categories = CATEGORIES,
+    items,
+    weeklyDishes,
+    weeklyOverrideDay,
+    storeSettings,
+  } = sharedState;
 
   const [selectedDetailItem, setSelectedDetailItem] = useState<MenuItem | null>(null);
   const [staffModalOpen, setStaffModalOpen] = useState(false);
@@ -127,6 +145,7 @@ export function App() {
   );
 
   const handleOpenTakeAwayWhatsApp = () => {
+    trackWhatsAppClick('takeaway_order');
     const msg =
       currentLang === 'es'
         ? '¡Hola Dorear! 👋 Quiero hacer un pedido para retirar.'
@@ -137,6 +156,7 @@ export function App() {
   };
 
   const handleOpenCakesWhatsApp = () => {
+    trackWhatsAppClick('whole_cake_inquiry');
     const msg =
       currentLang === 'es'
         ? '¡Hola Dorear! 👋 Quiero consultar para encargar una torta entera para festejo.'
@@ -185,6 +205,21 @@ export function App() {
     }));
   };
 
+  const handleAddCategory = (newCategory: MenuCategory) => {
+    commitStateUpdate((prev) => ({
+      ...prev,
+      categories: [...(prev.categories || CATEGORIES), newCategory],
+    }));
+  };
+
+  const handleDeleteCategory = (categoryId: string) => {
+    commitStateUpdate((prev) => ({
+      ...prev,
+      categories: (prev.categories || CATEGORIES).filter((c) => c.id !== categoryId),
+      items: prev.items.filter((i) => i.categoryId !== categoryId),
+    }));
+  };
+
   const handleUpdateWeeklyDish = (updatedDish: WeeklyDish) => {
     commitStateUpdate((prev) => ({
       ...prev,
@@ -211,7 +246,7 @@ export function App() {
   const handleResetDefaults = () => {
     if (
       window.confirm(
-        '¿Seguro que querés restaurar todos los platos, precios originales y fotos de Dorear en todos los dispositivos?'
+        '¿Seguro que querés restaurar todos los platos, categorías, precios originales y fotos de Dorear en todos los dispositivos?'
       )
     ) {
       clearLocalStateSnapshot();
@@ -230,6 +265,7 @@ export function App() {
   };
 
   const handleSelectWeeklyDish = (dish: WeeklyDish) => {
+    trackWeeklyDishClick(dish, currentLang);
     setSelectedDetailItem({
       id: `weekly-${dish.dayNumber}`,
       categoryId: 'weekly',
@@ -258,6 +294,34 @@ export function App() {
     });
   };
 
+  const handleOpenProductDetail = (item: MenuItem) => {
+    trackProductClick(item, currentLang);
+    setSelectedDetailItem(item);
+  };
+
+  const handleSelectCategory = (catId: string) => {
+    const cat = categories.find((c) => c.id === catId);
+    if (cat) {
+      trackCategoryChange(cat.id, cat.name[currentLang] || cat.name.es);
+    }
+    setActiveCategoryId(catId);
+  };
+
+  const handleSelectDietaryFilter = (filter: DietaryTag | null) => {
+    trackDietaryFilterChange(filter);
+    setActiveDietaryFilter(filter);
+  };
+
+  const handleSelectLang = (lang: Language) => {
+    trackLanguageChange(lang);
+    setCurrentLang(lang);
+  };
+
+  const handleOpenWifiModal = () => {
+    trackWifiModalOpen();
+    setWifiModalOpen(true);
+  };
+
   if (currentRole === 'barista') {
     return (
       <Suspense
@@ -268,7 +332,7 @@ export function App() {
         }
       >
         <BaristaPanel
-          categories={CATEGORIES}
+          categories={categories}
           items={items}
           isLiveSync={isLiveSync}
           onToggleAvailability={handleToggleAvailability}
@@ -288,7 +352,7 @@ export function App() {
         }
       >
         <AdminPanel
-          categories={CATEGORIES}
+          categories={categories}
           items={items}
           weeklyDishes={weeklyDishes}
           weeklyOverrideDay={weeklyOverrideDay}
@@ -299,6 +363,8 @@ export function App() {
           onAddItem={handleAddItem}
           onUpdateItem={handleUpdateItem}
           onDeleteItem={handleDeleteItem}
+          onAddCategory={handleAddCategory}
+          onDeleteCategory={handleDeleteCategory}
           onUpdateWeeklyDish={handleUpdateWeeklyDish}
           settings={storeSettings}
           onUpdateSettings={handleUpdateSettings}
@@ -310,7 +376,7 @@ export function App() {
   }
 
   const activeCategory =
-    CATEGORIES.find((c) => c.id === activeCategoryId) || CATEGORIES[0];
+    categories.find((c) => c.id === activeCategoryId) || categories[0] || CATEGORIES[0];
   const categoryItems = items.filter((item) => {
     const matchesCat = item.categoryId === activeCategoryId;
     const matchesDietary =
@@ -340,9 +406,9 @@ export function App() {
 
       <Header
         currentLang={currentLang}
-        onSelectLang={setCurrentLang}
+        onSelectLang={handleSelectLang}
         onOpenStaffModal={() => setStaffModalOpen(true)}
-        onOpenWifiModal={() => setWifiModalOpen(true)}
+        onOpenWifiModal={handleOpenWifiModal}
       />
 
       <WeeklyMenuPill
@@ -356,14 +422,14 @@ export function App() {
       <DietaryFilters
         currentLang={currentLang}
         activeFilter={activeDietaryFilter}
-        onSelectFilter={setActiveDietaryFilter}
+        onSelectFilter={handleSelectDietaryFilter}
       />
 
       <CategoryNav
-        categories={CATEGORIES}
+        categories={categories}
         activeCategoryId={activeCategoryId}
         currentLang={currentLang}
-        onSelectCategory={setActiveCategoryId}
+        onSelectCategory={handleSelectCategory}
       />
 
       <main className="max-w-xl mx-auto px-5 pt-7">
@@ -375,10 +441,10 @@ export function App() {
               {currentLang === 'pt' && 'Nosso Cardápio'}
             </span>
             <h2 className="font-serif text-4xl sm:text-5xl text-ink font-medium leading-tight mt-1">
-              {activeCategory.name[currentLang]}
+              {activeCategory.name[currentLang] || activeCategory.name.es}
             </h2>
             <p className="text-sm sm:text-base text-muted leading-relaxed mt-1.5">
-              {activeCategory.description[currentLang]}
+              {activeCategory.description[currentLang] || activeCategory.description.es}
             </p>
           </div>
 
@@ -393,7 +459,7 @@ export function App() {
               key={item.id}
               item={item}
               currentLang={currentLang}
-              onOpenDetail={setSelectedDetailItem}
+              onOpenDetail={handleOpenProductDetail}
             />
           ))}
 

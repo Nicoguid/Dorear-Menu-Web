@@ -10,6 +10,7 @@ import { formatDishTitle, parseArsPrice } from '../utils/securityAndFormat';
 import { getOptimizedImageUrl } from '../utils/imageUrl';
 import { ItemFormModal } from './ItemFormModal';
 import { WeeklyDishFormModal } from './WeeklyDishFormModal';
+import { CategoryFormModal } from './CategoryFormModal';
 import {
   ArrowLeft,
   Save,
@@ -26,6 +27,7 @@ import {
   Wifi,
   Users,
   Radio,
+  FolderPlus,
 } from 'lucide-react';
 
 interface AdminPanelProps {
@@ -40,6 +42,8 @@ interface AdminPanelProps {
   onAddItem: (newItem: MenuItem) => void;
   onUpdateItem: (updatedItem: MenuItem) => void;
   onDeleteItem: (itemId: string) => void;
+  onAddCategory: (newCategory: MenuCategory) => void;
+  onDeleteCategory?: (categoryId: string) => void;
   onUpdateWeeklyDish: (updatedDish: WeeklyDish) => void;
   settings: StoreSettings;
   onUpdateSettings: (newSettings: StoreSettings) => void;
@@ -59,6 +63,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   onAddItem,
   onUpdateItem,
   onDeleteItem,
+  onAddCategory,
+  onDeleteCategory,
   onUpdateWeeklyDish,
   settings,
   onUpdateSettings,
@@ -75,8 +81,17 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     setLocalSettings(settings);
   }, [settings]);
 
+  useEffect(() => {
+    if (!categories.some((c) => c.id === selectedCat)) {
+      if (categories[0]) {
+        setSelectedCat(categories[0].id);
+      }
+    }
+  }, [categories, selectedCat]);
+
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [isCreatingItem, setIsCreatingItem] = useState(false);
+  const [isCreatingCategory, setIsCreatingCategory] = useState(false);
   const [editingWeeklyDish, setEditingWeeklyDish] = useState<WeeklyDish | null>(null);
 
   const showFeedback = (msg: string) => {
@@ -111,6 +126,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     showFeedback('Configuración del local guardada y sincronizada.');
   };
 
+  const currentCategory = categories.find((c) => c.id === selectedCat) || categories[0];
   const currentCatItems = items.filter((i) => i.categoryId === selectedCat);
 
   const handlePriceInputChange = (itemId: string, value: string) => {
@@ -142,6 +158,28 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     if (window.confirm(`¿Segura que deseás eliminar "${item.name.es}" de la carta?`)) {
       onDeleteItem(item.id);
       showFeedback(`"${item.name.es}" fue eliminado.`);
+    }
+  };
+
+  const handleDeleteCategoryClick = (cat: MenuCategory) => {
+    if (categories.length <= 1) {
+      showError('No podés eliminar la única categoría existente.');
+      return;
+    }
+    const count = items.filter((i) => i.categoryId === cat.id).length;
+    if (count > 0) {
+      showError(
+        `La categoría "${cat.name.es}" tiene ${count} plato(s). Primero eliminalos o asignales otra categoría.`
+      );
+      return;
+    }
+    if (window.confirm(`¿Segura que querés eliminar la categoría vacía "${cat.name.es}"?`)) {
+      onDeleteCategory?.(cat.id);
+      const remaining = categories.filter((c) => c.id !== cat.id);
+      if (remaining.length > 0) {
+        setSelectedCat(remaining[0].id);
+      }
+      showFeedback(`Categoría "${cat.name.es}" eliminada.`);
     }
   };
 
@@ -295,11 +333,20 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         </div>
 
         <div className="bg-paper rounded-2xl border border-line p-4 mb-4 shadow-soft">
-          <div className="flex items-center justify-between gap-2 mb-3">
+          <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
             <span className="text-xs font-semibold text-muted uppercase tracking-wider">
               Platos de la Carta ({items.length})
             </span>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                type="button"
+                onClick={() => setIsCreatingCategory(true)}
+                className="min-h-[36px] px-3 py-1.5 rounded-lg border border-gold/60 bg-gold/10 hover:bg-gold/20 text-ink text-xs font-medium flex items-center gap-1.5 transition-all shadow-2xs"
+                title="Crear una nueva categoría para la carta"
+              >
+                <FolderPlus size={14} className="text-gold" />
+                <span>Nueva categoría</span>
+              </button>
               <button
                 type="button"
                 onClick={() => setIsCreatingItem(true)}
@@ -319,7 +366,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             </div>
           </div>
 
-          <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
+          <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1 items-center">
             {categories.map((c) => {
               const count = items.filter((i) => i.categoryId === c.id).length;
               return (
@@ -328,17 +375,56 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   type="button"
                   aria-pressed={selectedCat === c.id}
                   onClick={() => setSelectedCat(c.id)}
-                  className={`min-h-[34px] px-3 py-1.5 rounded-full text-xs whitespace-nowrap transition-all ${
+                  className={`min-h-[34px] px-3 py-1.5 rounded-full text-xs whitespace-nowrap transition-all shrink-0 ${
                     selectedCat === c.id
                       ? 'bg-wine text-white font-medium shadow-xs'
-                      : 'bg-cream text-muted border border-line hover:border-gold/60'
+                      : 'bg-cream text-muted border border-line hover:border-gold/60 hover:text-ink'
                   }`}
                 >
                   {c.name.es} ({count})
                 </button>
               );
             })}
+            <button
+              type="button"
+              onClick={() => setIsCreatingCategory(true)}
+              className="min-h-[34px] px-3 py-1.5 rounded-full text-xs whitespace-nowrap transition-all border border-dashed border-wine/40 text-wine hover:bg-wine/10 hover:border-wine font-medium flex items-center gap-1 shrink-0"
+              title="Crear nueva categoría"
+            >
+              <Plus size={13} />
+              <span>Nueva categoría</span>
+            </button>
           </div>
+
+          {currentCategory && (
+            <div className="mt-3 pt-3 border-t border-line/60 flex items-center justify-between gap-2 text-xs">
+              <div className="min-w-0 flex-1">
+                <span className="font-serif font-semibold text-ink text-sm">
+                  {currentCategory.name.es}
+                </span>
+                {currentCategory.description?.es && (
+                  <p className="text-[11px] text-muted truncate">
+                    {currentCategory.description.es}
+                  </p>
+                )}
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="text-[11px] text-muted bg-cream px-2 py-0.5 rounded-md border border-line">
+                  {currentCatItems.length} {currentCatItems.length === 1 ? 'plato' : 'platos'}
+                </span>
+                {onDeleteCategory && currentCatItems.length === 0 && (
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteCategoryClick(currentCategory)}
+                    className="p-1 rounded-md text-muted hover:text-wine hover:bg-wine/10 transition-colors"
+                    title={`Eliminar categoría vacía "${currentCategory.name.es}"`}
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="space-y-2.5">
@@ -446,15 +532,30 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           })}
 
           {currentCatItems.length === 0 && (
-            <div className="text-center py-12 text-xs text-muted bg-paper rounded-xl border border-line">
-              No hay platos en esta categoría.{' '}
-              <button
-                type="button"
-                onClick={() => setIsCreatingItem(true)}
-                className="text-wine font-medium hover:underline"
-              >
-                Agregar el primero
-              </button>
+            <div className="text-center py-10 px-4 text-xs text-muted bg-paper rounded-xl border border-line">
+              <p className="mb-3">
+                No hay platos en "{currentCategory?.name.es || 'esta categoría'}".
+              </p>
+              <div className="flex items-center justify-center gap-2 flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => setIsCreatingItem(true)}
+                  className="px-3.5 py-1.5 rounded-lg bg-wine text-white font-medium hover:bg-wine-dark transition-colors inline-flex items-center gap-1 shadow-xs"
+                >
+                  <Plus size={13} />
+                  <span>Agregar plato aquí</span>
+                </button>
+                {onDeleteCategory && currentCategory && (
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteCategoryClick(currentCategory)}
+                    className="px-3 py-1.5 rounded-lg border border-line text-muted hover:text-wine hover:border-wine/40 transition-colors inline-flex items-center gap-1"
+                  >
+                    <Trash2 size={13} />
+                    <span>Eliminar categoría</span>
+                  </button>
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -555,6 +656,19 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           </form>
         </div>
       </div>
+
+      {isCreatingCategory && (
+        <CategoryFormModal
+          existingCategories={categories}
+          onClose={() => setIsCreatingCategory(false)}
+          onSave={(newCat) => {
+            onAddCategory(newCat);
+            setSelectedCat(newCat.id);
+            setIsCreatingCategory(false);
+            showFeedback(`Categoría "${newCat.name.es}" creada.`);
+          }}
+        />
+      )}
 
       {(isCreatingItem || editingItem) && (
         <ItemFormModal

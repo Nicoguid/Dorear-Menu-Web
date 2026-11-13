@@ -1,0 +1,419 @@
+{
+  "Dorear_Reel_45s": {
+    "kind": "reel",
+    "duration": 45,
+    "scenes": [
+      {
+        "start": 0,
+        "end": 4,
+        "shot": "INTRO",
+        "title": "",
+        "instruction": ""
+      },
+      {
+        "start": 4,
+        "end": 7,
+        "shot": "home",
+        "title": "La carta, en tu celular.",
+        "instruction": "Abrila desde el QR del local. Sin descargas."
+      },
+      {
+        "start": 7,
+        "end": 11,
+        "shot": "cakes",
+        "title": "¿Qué te tienta hoy?",
+        "instruction": "Explorá cafés, pastelería, brunch y más."
+      },
+      {
+        "start": 11,
+        "end": 15,
+        "shot": "coffee_after",
+        "title": "Tu café, a tu manera.",
+        "instruction": "Elegí un adicional y mirá el precio actualizado."
+      },
+      {
+        "start": 15,
+        "end": 18,
+        "shot": "gluten",
+        "title": "Encontrá tus opciones.",
+        "instruction": "Filtrá la carta. Consultanos por alergias."
+      },
+      {
+        "start": 18,
+        "end": 20,
+        "shot": "english",
+        "title": "En tu idioma.",
+        "instruction": "Español · English · Português"
+      },
+      {
+        "start": 20,
+        "end": 22,
+        "shot": "portuguese",
+        "title": "No seu idioma.",
+        "instruction": "Cambiá el idioma con un toque."
+      },
+      {
+        "start": 22,
+        "end": 26,
+        "shot": "weekly",
+        "title": "Un almuerzo diferente.",
+        "instruction": "Descubrí el menú ejecutivo de la semana."
+      },
+      {
+        "start": 26,
+        "end": 30,
+        "shot": "pickup",
+        "title": "¿Lo querés para llevar?",
+        "instruction": "Coordiná tu pedido por WhatsApp."
+      },
+      {
+        "start": 30,
+        "end": 35,
+        "shot": "reserve_form",
+        "title": "Un ratito para compartir.",
+        "instruction": "Solicitá tu mesa para grupos de 5 a 16."
+      },
+      {
+        "start": 35,
+        "end": 38,
+        "shot": "wifi_copied",
+        "title": "Conectate y disfrutá.",
+        "instruction": "Los datos del Wi-Fi, a un toque."
+      },
+      {
+        "start": 38,
+        "end": 45,
+        "shot": "OUTRO",
+        "title": "",
+        "instruction": ""
+      }
+    ]
+  },
+  "Dorear_Tutorial_Clientes": {
+    "kind": "tutorial",
+    "duration": 128,
+    "scenes": [
+      {
+        "start": 0,
+        "end": 4,
+        "shot": "INTRO",
+        "title": "",
+        "instruction": ""
+      },
+      {
+        "start": 4,
+        "end": 10,
+        "shot": "home",
+        "title": "Abrí la carta.",
+        "instruction": "Escaneá el QR del local con tu celular."
+      },
+      {
+        "start": 10,
+        "end": 13,
+        "shot": "english",
+        "title": "Elegí tu idioma.",
+        "instruction": "Tocá EN para ver la carta en inglés."
+      },
+      {
+        "start": 13,
+        "end": 16,
+        "shot": "portuguese",
+        "title": "También en portugués.",
+        "instruction": "Tocá PT. Podés volver a ES cuando quieras."
+      },
+      {
+        "start": 16,
+        "end": 22,
+        "shot": "cakes",
+        "title": "Explorá las categorías.",
+        "instruction": "Deslizá la barra y tocá lo que querés ver."
+      },
+      {
+        "start": 22,
+        "end": 28,
+        "shot": "cake_detail",
+        "title": "Conocé cada producto.",
+        "instruction": "Tocá su nombre para abrir el detalle y la foto."
+      },
+      {
+        "start": 28,
+        "end": 34,
+        "shot": "gluten",
+        "title": "Usá los filtros.",
+        "instruction": "Sin TACC filtra la categoría que estás mirando."
+      },
+      {
+        "start": 34,
+        "end": 37,
+        "shot": "vegan",
+        "title": "Opciones veganas.",
+        "instruction": "Tocá Vegano para ver las opciones etiquetadas."
+      },
+      {
+        "start": 37,
+        "end": 40,
+        "shot": "dairyfree",
+        "title": "Opciones sin lactosa.",
+        "instruction": "Cada filtro se aplica a la categoría activa."
+      },
+      {
+        "start": 40,
+        "end": 44,
+        "shot": "coffee_before",
+        "title": "Elegí un adicional.",
+        "instruction": "En el detalle podés elegir hasta una opción."
+      },
+      {
+        "start": 44,
+        "end": 50,
+        "shot": "coffee_after",
+        "title": "Revisá el total.",
+        "instruction": "El precio cambia y se muestran advertencias."
+      },
+      {
+        "start": 50,
+        "end": 56,
+        "shot": "weekly",
+        "title": "Mirá toda la semana.",
+        "instruction": "Abrí el menú ejecutivo y elegí un día."
+      },
+      {
+        "start": 56,
+        "end": 60,
+        "shot": "weekly_dinein",
+        "title": "¿Salón o Take Away?",
+        "instruction": "Abrí el plato para ver las modalidades."
+      },
+      {
+        "start": 60,
+        "end": 65,
+        "shot": "weekly_takeaway",
+        "title": "Para retirar.",
+        "instruction": "Tocá Take Away y revisá el precio de esa opción."
+      },
+      {
+        "start": 65,
+        "end": 72,
+        "shot": "cake_order",
+        "title": "Encargá una torta.",
+        "instruction": "En Tortas y Budines, tocá Consultar Torta."
+      },
+      {
+        "start": 72,
+        "end": 79,
+        "shot": "pickup",
+        "title": "Pedí por WhatsApp.",
+        "instruction": "Tocá Pedir para llevar y coordiná con el local."
+      },
+      {
+        "start": 79,
+        "end": 88,
+        "shot": "reserve_form",
+        "title": "Organizá tu encuentro.",
+        "instruction": "Elegí personas, fecha, horario y tus datos."
+      },
+      {
+        "start": 88,
+        "end": 95,
+        "shot": "reserve_deposit",
+        "title": "Revisá la propuesta.",
+        "instruction": "Leé el menú fijo y las instrucciones de la seña."
+      },
+      {
+        "start": 95,
+        "end": 103,
+        "shot": "reserve_send",
+        "title": "Enviá la solicitud.",
+        "instruction": "Sumá notas o torta. El local confirma por WhatsApp."
+      },
+      {
+        "start": 103,
+        "end": 107,
+        "shot": "wifi",
+        "title": "Abrí el Wi-Fi.",
+        "instruction": "Tocá Wi-Fi en la cabecera para ver los datos."
+      },
+      {
+        "start": 107,
+        "end": 110,
+        "shot": "wifi_copied",
+        "title": "Copiá la clave.",
+        "instruction": "Tocá Copiar clave y pegala al conectarte."
+      },
+      {
+        "start": 110,
+        "end": 115,
+        "shot": "review",
+        "title": "Contanos tu experiencia.",
+        "instruction": "El botón de reseñas abre Google."
+      },
+      {
+        "start": 115,
+        "end": 120,
+        "shot": "location",
+        "title": "Encontranos y seguinos.",
+        "instruction": "Consultá horarios, abrí Maps o visitá Instagram."
+      },
+      {
+        "start": 120,
+        "end": 124,
+        "shot": "offline",
+        "title": "Si perdés la señal.",
+        "instruction": "Con la carta abierta, se indica el modo sin señal."
+      },
+      {
+        "start": 124,
+        "end": 128,
+        "shot": "OUTRO",
+        "title": "",
+        "instruction": ""
+      }
+    ]
+  },
+  "Dorear_Guia_Equipo": {
+    "kind": "staff",
+    "duration": 102,
+    "scenes": [
+      {
+        "start": 0,
+        "end": 4,
+        "shot": "INTRO",
+        "title": "",
+        "instruction": ""
+      },
+      {
+        "start": 4,
+        "end": 10,
+        "shot": "staff_login",
+        "title": "Ingresá con tu acceso.",
+        "instruction": "El PIN define el rol: barra o administración."
+      },
+      {
+        "start": 10,
+        "end": 15,
+        "shot": "barista",
+        "title": "Control de barra.",
+        "instruction": "Consultá productos y disponibilidad."
+      },
+      {
+        "start": 15,
+        "end": 20,
+        "shot": "barista_search",
+        "title": "Encontrá el producto.",
+        "instruction": "Buscá por nombre o filtrá por categoría."
+      },
+      {
+        "start": 20,
+        "end": 26,
+        "shot": "barista_soldout",
+        "title": "Marcá lo agotado.",
+        "instruction": "Un toque cambia Disponible a Agotado."
+      },
+      {
+        "start": 26,
+        "end": 31,
+        "shot": "customer_soldout",
+        "title": "Así lo ve el cliente.",
+        "instruction": "El estado se refleja en la carta sincronizada."
+      },
+      {
+        "start": 31,
+        "end": 36,
+        "shot": "admin",
+        "title": "Gestión del local.",
+        "instruction": "El acceso de administración abre más controles."
+      },
+      {
+        "start": 36,
+        "end": 42,
+        "shot": "admin_weekly",
+        "title": "Editá el menú semanal.",
+        "instruction": "Cambiá textos, traducciones, foto y precios."
+      },
+      {
+        "start": 42,
+        "end": 47,
+        "shot": "admin_override",
+        "title": "Elegí el plato destacado.",
+        "instruction": "Usá el calendario o fijá un día manualmente."
+      },
+      {
+        "start": 47,
+        "end": 51,
+        "shot": "admin_items",
+        "title": "Administrá la carta.",
+        "instruction": "Navegá por categorías o creá un nuevo plato."
+      },
+      {
+        "start": 51,
+        "end": 56,
+        "shot": "admin_price_edit",
+        "title": "Actualizá un precio.",
+        "instruction": "Escribí el nuevo valor junto al producto."
+      },
+      {
+        "start": 56,
+        "end": 60,
+        "shot": "admin_price_saved",
+        "title": "Guardá el cambio.",
+        "instruction": "Tocá el ícono de guardar para aplicarlo."
+      },
+      {
+        "start": 60,
+        "end": 66,
+        "shot": "admin_new",
+        "title": "Agregá un producto.",
+        "instruction": "Completá nombre, descripción, precio y categoría."
+      },
+      {
+        "start": 66,
+        "end": 71,
+        "shot": "admin_translation",
+        "title": "Cargá sus traducciones.",
+        "instruction": "Editá los textos en ES, EN y PT."
+      },
+      {
+        "start": 71,
+        "end": 77,
+        "shot": "admin_attributes",
+        "title": "Foto y etiquetas.",
+        "instruction": "Configurá foto, filtros, frutos secos y disponibilidad."
+      },
+      {
+        "start": 77,
+        "end": 81,
+        "shot": "admin_edit",
+        "title": "Corregí los datos.",
+        "instruction": "El lápiz permite editar un plato ya creado."
+      },
+      {
+        "start": 81,
+        "end": 85,
+        "shot": "admin_deleted",
+        "title": "Eliminá si hace falta.",
+        "instruction": "La papelera pide confirmación antes de eliminar."
+      },
+      {
+        "start": 85,
+        "end": 92,
+        "shot": "admin_settings",
+        "title": "Ajustá el local.",
+        "instruction": "WhatsApp, Wi-Fi y precio de la merienda grupal."
+      },
+      {
+        "start": 92,
+        "end": 98,
+        "shot": "admin_reset",
+        "title": "Restaurá los originales.",
+        "instruction": "El botón de restauración pide confirmación."
+      },
+      {
+        "start": 98,
+        "end": 102,
+        "shot": "OUTRO",
+        "title": "",
+        "instruction": ""
+      }
+    ]
+  }
+}

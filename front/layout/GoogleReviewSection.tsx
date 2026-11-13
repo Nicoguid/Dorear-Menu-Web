@@ -1,6 +1,7 @@
 import React from 'react';
 import { Language } from '../../db/types';
 import { Star, ExternalLink } from 'lucide-react';
+import { trackGoogleReviewClick } from '../utils/analytics';
 
 interface GoogleReviewSectionProps {
   currentLang: Language;
@@ -32,6 +33,7 @@ export const GoogleReviewSection: React.FC<GoogleReviewSectionProps> = ({ curren
           href="https://maps.google.com/?q=Dorear+Cafeteria+Puerto+Madero"
           target="_blank"
           rel="noopener noreferrer"
+          onClick={() => trackGoogleReviewClick()}
           className="inline-flex items-center gap-2 mt-4 px-5 py-2.5 rounded-full bg-wine text-white text-xs font-medium hover:bg-wine-dark transition-all shadow-xs"
         >
           <span>
