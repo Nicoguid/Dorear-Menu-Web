@@ -6,11 +6,6 @@ dist/
 dist-ssr/
 *.tsbuildinfo
 
-# Local development & tunnel binaries (kept locally, excluded from Git/Vercel)
-cloudflared.exe
-.dorear-live-state.json
-.dorear-live-state.json.tmp
-
 # Vercel & Environment
 .vercel/
 .env

@@ -22,9 +22,9 @@ export interface LanguageTabsProps {
 }
 
 const TABS: { id: Language; label: string }[] = [
-  { id: 'es', label: '🇦🇷 Español (Base)' },
-  { id: 'en', label: '🇺🇸 English' },
-  { id: 'pt', label: '🇧🇷 Português' },
+  { id: 'es', label: 'ES · Español (base)' },
+  { id: 'en', label: 'EN · English' },
+  { id: 'pt', label: 'PT · Português' },
 ];
 
 export const LanguageTabs: React.FC<LanguageTabsProps> = ({ activeLang, onSelectLang }) => (
@@ -103,7 +103,9 @@ export const ItemFormModal: React.FC<ItemFormModalProps> = ({
       return;
     }
     if (cleanPrice === null) {
-      setFormError('El precio debe ser un número válido mayor a $0 (ej. 6200 o 12.500).');
+      setFormError(
+        'El precio en pesos es obligatorio y debe ser mayor a $0 (ej. 6200 o 12.500).'
+      );
       return;
     }
     if (!isSafeImageUrl(imageUrl)) {
@@ -130,9 +132,9 @@ export const ItemFormModal: React.FC<ItemFormModalProps> = ({
     }
     const allergens = Array.from(allergensSet);
 
-    const defaultImg =
-      imageUrl.trim() ||
-      'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=900&q=80';
+    // Sin foto propia, el plato queda sin foto (antes se le ponía una foto genérica de
+    // un banco de imágenes, que no mostraba el producto real).
+    const cleanImageUrl = imageUrl.trim() || undefined;
 
     const generatedId =
       typeof crypto !== 'undefined' && 'randomUUID' in crypto
@@ -151,7 +153,7 @@ export const ItemFormModal: React.FC<ItemFormModalProps> = ({
       description: buildLocalizedString(descs.es, item?.description, descs.en, descs.pt),
       price: cleanPrice,
       available: isAvailable,
-      imageUrl: defaultImg,
+      imageUrl: cleanImageUrl,
       dietary: dietary.length ? dietary : undefined,
       allergens: allergens.length ? allergens : undefined,
       modifiers: item?.modifiers,
@@ -235,20 +237,26 @@ export const ItemFormModal: React.FC<ItemFormModalProps> = ({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="block text-muted font-medium mb-1">Precio ($ ARS) *</label>
+        <div>
+          <label htmlFor="item-price" className="block text-muted font-medium mb-1">
+            Precio en pesos *
+          </label>
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted font-semibold">$</span>
             <input
+              id="item-price"
               type="text"
               inputMode="numeric"
               required
               value={price}
               onChange={(e) => setPrice(e.target.value)}
               placeholder="Ej: 5500"
-              className="w-full min-h-[38px] bg-cream border border-line rounded-xl px-3 py-2 text-ink font-semibold focus:border-wine focus:outline-none"
+              className="w-full min-h-[42px] bg-cream border border-line rounded-xl pl-7 pr-3 py-2 text-ink font-semibold focus:border-wine focus:outline-none"
             />
           </div>
+        </div>
 
+        <div className="grid grid-cols-1 gap-3">
           <div>
             <label className="block text-muted font-medium mb-1">Categoría *</label>
             <select

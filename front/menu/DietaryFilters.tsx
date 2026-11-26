@@ -1,6 +1,7 @@
 import React from 'react';
 import { DietaryTag, Language } from '../../db/types';
 import { WheatOff, Leaf, MilkOff, LucideIcon } from 'lucide-react';
+import { useDragScroll } from '../layout/useDragScroll';
 
 interface DietaryFiltersProps {
   currentLang: Language;
@@ -21,20 +22,20 @@ const FILTERS: {
   {
     id: 'sin_tacc',
     icon: WheatOff,
-    iconColor: 'text-gold',
-    label: { es: 'Sin TACC', en: 'Gluten-Free', pt: 'Sem Glúten' },
+    iconColor: 'text-gold-dark',
+    label: { es: 'Sin TACC', en: 'Gluten-free', pt: 'Sem glúten' },
   },
   {
     id: 'vegano',
     icon: Leaf,
     iconColor: 'text-emerald-800',
-    label: { es: 'Vegano', en: 'Plant-Based', pt: 'Vegano' },
+    label: { es: 'Vegano', en: 'Vegan', pt: 'Vegano' },
   },
   {
     id: 'sin_lactosa',
     icon: MilkOff,
     iconColor: 'text-wine',
-    label: { es: 'Sin Lactosa', en: 'Dairy-Free', pt: 'Sem Lactose' },
+    label: { es: 'Sin lactosa', en: 'Dairy-free', pt: 'Sem lactose' },
   },
 ];
 
@@ -43,8 +44,10 @@ export const DietaryFilters: React.FC<DietaryFiltersProps> = ({
   activeFilter,
   onSelectFilter,
 }) => {
+  // Misma fila deslizable que las categorías (dedo, mouse y ruedita, sin mover la página).
+  const { ref, wasDrag, handlers } = useDragScroll<HTMLDivElement>();
   return (
-    <div className="w-full max-w-xl mx-auto px-4 my-2">
+    <div className="w-full px-4">
       <div
         role="group"
         aria-label={
@@ -54,12 +57,9 @@ export const DietaryFilters: React.FC<DietaryFiltersProps> = ({
             ? 'Dietary filters'
             : 'Filtros alimentares'
         }
-        onWheel={(e) => {
-          if (e.deltaY !== 0 && e.deltaX === 0) {
-            e.currentTarget.scrollLeft += e.deltaY;
-          }
-        }}
-        className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 select-none"
+        ref={ref}
+        {...handlers}
+        className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1.5 -my-1.5 -mx-4 px-4 select-none"
         style={{ WebkitOverflowScrolling: 'touch' }}
       >
         {FILTERS.map((f) => {
@@ -70,16 +70,16 @@ export const DietaryFilters: React.FC<DietaryFiltersProps> = ({
               key={f.id || 'all'}
               type="button"
               aria-pressed={isSelected}
-              onClick={() => onSelectFilter(f.id)}
-              className={`shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] sm:text-xs font-sans transition-all border ${
-                isSelected
-                  ? 'bg-ink text-cream border-ink font-medium shadow-2xs'
-                  : 'bg-paper text-muted border-line hover:border-gold/60 hover:text-ink'
+              onClick={() => {
+                if (!wasDrag()) onSelectFilter(f.id);
+              }}
+              className={`shrink-0 inline-flex items-center gap-1 h-7 px-2.5 rounded-full text-[13px] font-sans ${
+                isSelected ? 'liquid-ink font-medium' : 'liquid text-muted hover:text-ink'
               }`}
             >
               {IconComponent && (
                 <IconComponent
-                  size={11}
+                  size={13}
                   strokeWidth={2.2}
                   className={isSelected ? 'text-cream' : f.iconColor}
                 />

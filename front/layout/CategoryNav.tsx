@@ -1,5 +1,6 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { Language, MenuCategory } from '../../db/types';
+import { useDragScroll } from './useDragScroll';
 
 interface CategoryNavProps {
   categories: MenuCategory[];
@@ -14,110 +15,54 @@ export const CategoryNav: React.FC<CategoryNavProps> = ({
   currentLang,
   onSelectCategory,
 }) => {
-  const navRef = useRef<HTMLDivElement>(null);
-  const isMouseDownRef = useRef(false);
-  const startXRef = useRef(0);
-  const scrollLeftRef = useRef(0);
-  const hasMovedRef = useRef(false);
-  const [isDragging, setIsDragging] = useState(false);
+  const { ref: navRef, isDragging, wasDrag, handlers } = useDragScroll<HTMLElement>();
 
+  // Centra la categoría activa moviendo solo la fila. No usamos scrollIntoView porque
+  // Chrome lo toma como nuevo punto de partida del Tab: el primer Tab saltaba el
+  // header, el buscador y los filtros.
   useEffect(() => {
-    if (!navRef.current) return;
-    const activeBtn = navRef.current.querySelector<HTMLButtonElement>('[aria-pressed="true"]');
-    if (activeBtn) {
-      activeBtn.scrollIntoView({
-        behavior: 'smooth',
-        inline: 'center',
-        block: 'nearest',
-      });
-    }
-  }, [activeCategoryId]);
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    const el = navRef.current;
-    if (!el) return;
-
-    isMouseDownRef.current = true;
-    setIsDragging(true);
-    hasMovedRef.current = false;
-    startXRef.current = e.pageX - el.offsetLeft;
-    scrollLeftRef.current = el.scrollLeft;
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isMouseDownRef.current) return;
-    const el = navRef.current;
-    if (!el) return;
-
-    e.preventDefault();
-    const x = e.pageX - el.offsetLeft;
-    const walk = (x - startXRef.current) * 1.5;
-
-    if (Math.abs(walk) > 4) {
-      hasMovedRef.current = true;
-    }
-
-    el.scrollLeft = scrollLeftRef.current - walk;
-  };
-
-  const handleMouseUpOrLeave = () => {
-    isMouseDownRef.current = false;
-    setIsDragging(false);
-  };
-
-  const handleWheel = (e: React.WheelEvent) => {
-    const el = navRef.current;
-    if (!el) return;
-    if (e.deltaY !== 0 && e.deltaX === 0) {
-      el.scrollLeft += e.deltaY;
-    }
-  };
+    const nav = navRef.current;
+    const activeBtn = nav?.querySelector<HTMLButtonElement>('[aria-pressed="true"]');
+    if (!nav || !activeBtn) return;
+    const left = activeBtn.offsetLeft - (nav.clientWidth - activeBtn.offsetWidth) / 2;
+    nav.scrollTo({ left: Math.max(0, left), behavior: 'smooth' });
+  }, [activeCategoryId, navRef]);
 
   const handleClickCategory = (catId: string) => {
-    if (!hasMovedRef.current) {
-      onSelectCategory(catId);
-    }
+    if (!wasDrag()) onSelectCategory(catId);
   };
 
   return (
-    <div className="sticky top-0 z-30 bg-cream/95 backdrop-blur-md border-y border-line py-2 shadow-xs">
-      <div className="relative max-w-xl mx-auto">
-        <nav
-          ref={navRef}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUpOrLeave}
-          onMouseLeave={handleMouseUpOrLeave}
-          onWheel={handleWheel}
-          className={`px-4 flex gap-2 overflow-x-auto no-scrollbar scroll-smooth select-none ${
-            isDragging ? 'cursor-grabbing' : 'cursor-grab'
-          }`}
-          style={{
-            WebkitOverflowScrolling: 'touch',
-            overscrollBehaviorX: 'contain',
-          }}
-          aria-label="Categorías"
-        >
-          {categories.map((cat) => {
-            const isActive = cat.id === activeCategoryId;
-            return (
-              <button
-                key={cat.id}
-                type="button"
-                onClick={() => handleClickCategory(cat.id)}
-                className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-sans transition-all shrink-0 ${
-                  isActive
-                    ? 'bg-wine text-white font-medium shadow-xs scale-102'
-                    : 'bg-paper text-muted border border-line hover:border-gold/60 hover:text-ink'
-                }`}
-                aria-pressed={isActive}
-              >
-                {cat.name[currentLang] || cat.name.es}
-              </button>
-            );
-          })}
-        </nav>
-      </div>
-    </div>
+    <nav
+      ref={navRef}
+      {...handlers}
+      className={`relative px-4 py-1.5 -my-1.5 flex gap-1.5 overflow-x-auto no-scrollbar scroll-smooth select-none ${
+        isDragging ? 'cursor-grabbing' : 'cursor-grab'
+      }`}
+      style={{
+        WebkitOverflowScrolling: 'touch',
+        overscrollBehaviorX: 'contain',
+      }}
+      aria-label={
+        currentLang === 'es' ? 'Categorías de la carta' : currentLang === 'en' ? 'Menu categories' : 'Categorias do cardápio'
+      }
+    >
+      {categories.map((cat) => {
+        const isActive = cat.id === activeCategoryId;
+        return (
+          <button
+            key={cat.id}
+            type="button"
+            onClick={() => handleClickCategory(cat.id)}
+            className={`whitespace-nowrap h-9 px-3.5 rounded-full text-[15px] font-sans transition-[background,color,box-shadow] shrink-0 ${
+              isActive ? 'liquid-wine font-medium' : 'liquid text-ink/85 hover:text-ink'
+            }`}
+            aria-pressed={isActive}
+          >
+            {cat.name[currentLang] || cat.name.es}
+          </button>
+        );
+      })}
+    </nav>
   );
 };

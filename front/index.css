@@ -9,6 +9,17 @@
     --gold: #a67c3f;
   }
 
+  html {
+    -webkit-text-size-adjust: 100%;
+    touch-action: manipulation;
+  }
+
+  /* Las hojas y diálogos no arrastran el scroll de la página de atrás. */
+  [role='dialog'],
+  [role='dialog'] .overflow-y-auto {
+    overscroll-behavior: contain;
+  }
+
   body {
     background-color: var(--cream);
     color: var(--ink);
@@ -22,9 +33,113 @@
   input:focus-visible,
   select:focus-visible,
   textarea:focus-visible,
+  summary:focus-visible,
   [role="button"]:focus-visible {
     outline: 2px solid var(--gold);
     outline-offset: 2px;
+  }
+}
+
+@layer components {
+  /* Superficies nítidas: tarjetas casi opacas, bordes definidos y sombras cortas.
+     El desenfoque (blur) queda solo donde el contenido pasa por detrás: la barra
+     fija y el botón flotante. Así se mantiene el efecto vidrio sin "niebla". */
+  .glass {
+    background-color: #fffdf9;
+    border: 1px solid #e6dac6;
+    box-shadow:
+      inset 0 1px 0 #ffffff,
+      0 1px 2px rgba(55, 46, 37, 0.06),
+      0 6px 14px -8px rgba(55, 46, 37, 0.16);
+  }
+
+  .glass-bar {
+    background-color: rgba(250, 247, 240, 0.95);
+    border-bottom: 1px solid #e6dac6;
+    box-shadow: 0 8px 14px -12px rgba(55, 46, 37, 0.3);
+    -webkit-backdrop-filter: blur(12px) saturate(1.2);
+    backdrop-filter: blur(12px) saturate(1.2);
+  }
+
+  /* Tarjeta del menú ejecutivo: papel blanco con borde bordó suave. */
+  .weekly-card {
+    background-color: #fffdf9;
+    border-color: rgba(103, 45, 53, 0.22);
+    box-shadow:
+      inset 0 1px 0 #ffffff,
+      0 1px 2px rgba(103, 45, 53, 0.08),
+      0 8px 18px -12px rgba(103, 45, 53, 0.3);
+  }
+
+  /* Franja superior del menú ejecutivo: crema rosado un tono más oscuro que la tarjeta,
+     para que el título y la chef se separen del plato del día sin un bloque pesado. */
+  .weekly-card-head {
+    background-color: #f3e7e1;
+    border-bottom: 1px solid rgba(103, 45, 53, 0.14);
+  }
+
+  /* Pastillas de vidrio: un leve bisel (claro arriba, apenas más oscuro abajo),
+     borde definido y sombra corta. Sin transparencias que empañen el texto. */
+  .liquid {
+    border: 1px solid #e3d6c1;
+    background: linear-gradient(180deg, #fffefb 0%, #f8f2e8 100%);
+    box-shadow:
+      inset 0 1px 0 #ffffff,
+      0 1px 2px rgba(55, 46, 37, 0.1);
+  }
+
+  .liquid-wine {
+    color: #fff;
+    border: 1px solid #5a2630;
+    background: linear-gradient(180deg, #7d3742 0%, #672d35 100%);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.28),
+      0 2px 6px -2px rgba(103, 45, 53, 0.5);
+  }
+
+  .liquid-ink {
+    color: #faf7f0;
+    border: 1px solid #2c241d;
+    background: linear-gradient(180deg, #4b4036 0%, #372e25 100%);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.2),
+      0 2px 5px -2px rgba(55, 46, 37, 0.5);
+  }
+
+  .liquid-green {
+    color: #fff;
+    border: 1px solid #035a40;
+    background:
+      radial-gradient(80% 70% at 50% 120%, rgba(160, 255, 210, 0.18) 0%, transparent 60%),
+      linear-gradient(180deg, #0b7a57 0%, #04674a 100%);
+    /* Color sólido debajo del degradé: es el que miden las herramientas de contraste. */
+    background-color: #077052;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.35),
+      0 10px 22px -10px rgba(4, 90, 62, 0.6),
+      0 2px 4px -1px rgba(4, 90, 62, 0.3);
+  }
+
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .glass-bar {
+      background-color: #faf7f0;
+    }
+  }
+}
+
+/* Ancla de la carta: queda justo debajo de la barra fija al cambiar de categoría. */
+.menu-anchor {
+  scroll-margin-top: var(--menu-bar-h, 170px);
+}
+
+/* Pantallas bajas (celular horizontal): la barra sube hasta esconder buscador y
+   filtros, y queda fija solo la fila de categorías. */
+@media (max-height: 500px) {
+  .menu-bar {
+    top: calc(-1 * var(--menu-tools-h, 0px));
+  }
+  .menu-anchor {
+    scroll-margin-top: calc(var(--menu-bar-h, 170px) - var(--menu-tools-h, 0px));
   }
 }
 
@@ -34,4 +149,26 @@
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Línea fina dorada que separa el título de una sección de su lista: firme a la
+   izquierda (donde arranca la lectura) y se desvanece hacia la derecha. */
+.section-rule {
+  height: 1px;
+  background: linear-gradient(to right, rgba(166, 124, 63, 0.7), rgba(166, 124, 63, 0.25) 60%, transparent);
 }

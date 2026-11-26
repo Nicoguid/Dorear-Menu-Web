@@ -7,6 +7,8 @@ interface DietaryIconsProps {
   currentLang: Language;
   size?: 'sm' | 'md' | 'lg';
   showLabels?: boolean;
+  /** Íconos sueltos, sin círculo de color: para la lista, donde se repiten mucho. */
+  plain?: boolean;
 }
 
 const DIETARY_META: Record<
@@ -30,7 +32,7 @@ const DIETARY_META: Record<
       en: 'Gluten-free recipe',
       pt: 'Livre de glúten',
     },
-    containerClasses: 'bg-gold/15 text-gold border-gold/40 shadow-2xs',
+    containerClasses: 'bg-gold/15 text-gold-dark border-gold/40',
   },
   vegano: {
     icon: Leaf,
@@ -44,7 +46,7 @@ const DIETARY_META: Record<
       en: '100% plant-based',
       pt: '100% vegetal',
     },
-    containerClasses: 'bg-emerald-900/10 text-emerald-800 border-emerald-800/30 shadow-2xs',
+    containerClasses: 'bg-emerald-900/10 text-emerald-800 border-emerald-800/30',
   },
   sin_lactosa: {
     icon: MilkOff,
@@ -58,13 +60,13 @@ const DIETARY_META: Record<
       en: 'Dairy-free recipe',
       pt: 'Sem leite ou derivados lácteos',
     },
-    containerClasses: 'bg-wine/10 text-wine border-wine/30 shadow-2xs',
+    containerClasses: 'bg-wine/10 text-wine border-wine/30',
   },
 };
 
-const ICON_SIZES = { sm: 10, md: 12, lg: 14 };
+const ICON_SIZES = { sm: 11, md: 12, lg: 14 };
 const CIRCLE_SIZES = {
-  sm: 'w-4 h-4',
+  sm: 'w-5 h-5',
   md: 'w-5 h-5 sm:w-5.5 sm:h-5.5',
   lg: 'w-6 h-6',
 };
@@ -74,6 +76,7 @@ export const DietaryIcons: React.FC<DietaryIconsProps> = ({
   currentLang,
   size = 'md',
   showLabels = false,
+  plain = false,
 }) => {
   if (!tags || tags.length === 0) return null;
 
@@ -85,6 +88,20 @@ export const DietaryIcons: React.FC<DietaryIconsProps> = ({
         const IconComponent = meta.icon;
         const localizedLabel = meta.label[currentLang];
         const localizedDetail = meta.detail[currentLang];
+
+        if (plain) {
+          return (
+            <span
+              key={tag}
+              role="img"
+              title={`${localizedLabel} (${localizedDetail})`}
+              aria-label={localizedLabel}
+              className="inline-flex text-muted/80"
+            >
+              <IconComponent size={15} strokeWidth={1.9} aria-hidden="true" />
+            </span>
+          );
+        }
 
         if (showLabels) {
           return (
@@ -104,7 +121,7 @@ export const DietaryIcons: React.FC<DietaryIconsProps> = ({
             key={tag}
             title={`${localizedLabel} (${localizedDetail})`}
             aria-label={localizedLabel}
-            className={`inline-flex items-center justify-center rounded-full border ${CIRCLE_SIZES[size]} ${meta.containerClasses} transition-transform hover:scale-110`}
+            className={`inline-flex items-center justify-center rounded-full border ${CIRCLE_SIZES[size]} ${meta.containerClasses}`}
           >
             <IconComponent size={ICON_SIZES[size]} strokeWidth={2.2} />
           </span>

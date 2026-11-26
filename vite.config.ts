@@ -1,9 +1,9 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import { dorearRealtimeSyncPlugin } from './back/apiMiddleware';
+import { dorearSeoPlugin } from './back/seoPlugin';
 
 export default defineConfig({
-  plugins: [react(), dorearRealtimeSyncPlugin()],
+  plugins: [react(), dorearSeoPlugin()],
   build: {
     rollupOptions: {
       output: {
@@ -17,11 +17,9 @@ export default defineConfig({
   server: {
     port: 3000,
     host: true,
-    allowedHosts: ['dorear-carta.loca.lt', '.loca.lt', '.trycloudflare.com'],
   },
   preview: {
     port: 3000,
     host: true,
-    allowedHosts: ['dorear-carta.loca.lt', '.loca.lt', '.trycloudflare.com'],
   },
 });

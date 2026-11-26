@@ -98,7 +98,8 @@ export const WeeklyDishFormModal: React.FC<WeeklyDishFormModalProps> = ({
       description: buildLocalizedString(descs.es, dish.description, descs.en, descs.pt),
       priceDineIn: dineIn,
       priceTakeAway: takeAway,
-      imageUrl: imageUrl.trim() || dish.imageUrl,
+      // Vacío = sin foto (si cambia el plato, la foto vieja ya no corresponde).
+      imageUrl: imageUrl.trim(),
       dietary,
       allergens: Array.from(allergensSet),
     });

@@ -13,14 +13,19 @@ export const ModalDialog: React.FC<ModalDialogProps> = ({
   isOpen,
   onClose,
   ariaLabelledBy,
-  backdropClassName = 'fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-xs p-0 sm:p-4',
-  panelClassName = 'w-full sm:max-w-md bg-paper rounded-t-3xl sm:rounded-3xl border border-line overflow-hidden shadow-modal max-h-[90vh] flex flex-col',
+  backdropClassName = 'fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-ink/35 backdrop-blur-[3px] p-0 sm:p-4 animate-fade-in',
+  panelClassName = 'w-full sm:max-w-md bg-paper/[0.97] rounded-t-[28px] sm:rounded-[28px] border border-white/70 overflow-hidden shadow-modal max-h-[90vh] flex flex-col overscroll-contain pb-[env(safe-area-inset-bottom)] animate-sheet-up',
   children,
 }) => {
   const dialogRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!isOpen) return;
+
+    // Al abrir, el foco entra al diálogo (lectores de pantalla y teclado); al cerrar,
+    // vuelve al botón que lo abrió.
+    const opener = document.activeElement as HTMLElement | null;
+    dialogRef.current?.focus({ preventScroll: true });
 
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
@@ -54,6 +59,7 @@ export const ModalDialog: React.FC<ModalDialogProps> = ({
     return () => {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener('keydown', handleKeyDown);
+      opener?.focus?.({ preventScroll: true });
     };
   }, [isOpen, onClose]);
 
@@ -66,7 +72,8 @@ export const ModalDialog: React.FC<ModalDialogProps> = ({
         role="dialog"
         aria-modal="true"
         aria-labelledby={ariaLabelledBy}
-        className={panelClassName}
+        tabIndex={-1}
+        className={`${panelClassName} focus:outline-none`}
         onClick={(e) => e.stopPropagation()}
       >
         {children}

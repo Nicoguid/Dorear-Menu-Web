@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 const SUPABASE_URL =
   (typeof import.meta !== 'undefined' && import.meta.env?.VITE_SUPABASE_URL) ||
@@ -11,14 +11,22 @@ export const SUPABASE_IMAGES_BUCKET =
   (typeof import.meta !== 'undefined' && import.meta.env?.VITE_SUPABASE_IMAGES_BUCKET) ||
   'menu-images';
 
-export const isSupabaseConfigured = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
+let clientPromise: Promise<SupabaseClient | null> | null = null;
 
-export const supabase = isSupabaseConfigured
-  ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      realtime: {
-        params: {
-          eventsPerSecond: 10,
-        },
-      },
-    })
-  : null;
+/**
+ * Devuelve el cliente de Supabase cargando la librería recién la primera vez que se
+ * necesita. Así esos ~45 KB no frenan el primer dibujo de la carta: el cliente ve
+ * los datos guardados al instante y la sincronización en vivo llega un momento después.
+ */
+export function getSupabase(): Promise<SupabaseClient | null> {
+  if (!clientPromise) {
+    clientPromise = import('@supabase/supabase-js')
+      .then(({ createClient }) =>
+        createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+          realtime: { params: { eventsPerSecond: 10 } },
+        })
+      )
+      .catch(() => null);
+  }
+  return clientPromise;
+}

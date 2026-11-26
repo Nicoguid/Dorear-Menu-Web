@@ -1,8 +1,5 @@
 node_modules/
 dist/
-cloudflared.exe
 *.log
-.dorear-live-state.json
-.dorear-live-state.json.tmp
 .env
 .env.*

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useId } from 'react';
+import { getFixedUsdPrice } from '../../db/fixedPrices';
 import { DietaryTag, Language, MenuItem, ProductModifier } from '../../db/types';
 import { X, Check, AlertTriangle } from 'lucide-react';
 import { DietaryIcons } from '../menu/DietaryIcons';
@@ -6,6 +7,7 @@ import { ModalDialog } from './ModalDialog';
 import {
   evaluateDishDietarySafety,
   formatArsPrice,
+  formatUsdPrice,
   formatDishTitle,
   formatSignedPriceDelta,
 } from '../utils/securityAndFormat';
@@ -34,6 +36,9 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   }, [item?.id]);
 
   if (!item) return null;
+
+  // Obras de arte: precio fijo en dólares definido en db/fixedPrices.ts.
+  const fixedUsd = getFixedUsdPrice(item);
 
   const toggleModifier = (modId: string) => {
     setSelectedModifiers((prev) => (prev.includes(modId) ? [] : [modId]));
@@ -67,7 +72,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   return (
     <ModalDialog isOpen={Boolean(item)} onClose={onClose} ariaLabelledBy={titleId}>
       {item.imageUrl && !imgFailed ? (
-        <div className="relative w-full h-64 sm:h-72 bg-cream shrink-0 overflow-hidden">
+        <div className="relative w-full aspect-[4/3] max-h-72 bg-cream shrink-0 overflow-hidden">
           <img
             src={optimizedSrc}
             srcSet={responsiveSrcSet}
@@ -79,12 +84,12 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
             alt={item.name[currentLang]}
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/20" />
+          <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-black/25 to-transparent" aria-hidden="true" />
 
           <button
             type="button"
             onClick={onClose}
-            className="absolute top-4 right-4 bg-black/40 hover:bg-black/60 text-white rounded-full p-2 backdrop-blur-md transition-colors"
+            className="absolute top-3 right-3 w-11 h-11 inline-flex items-center justify-center bg-white/30 hover:bg-white/45 border border-white/50 text-white rounded-full backdrop-blur-md transition-colors"
             aria-label={closeAriaLabel}
           >
             <X size={18} />
@@ -95,7 +100,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="text-muted hover:text-ink p-1"
+            className="w-11 h-11 -m-2 inline-flex items-center justify-center rounded-full text-muted hover:text-ink hover:bg-cream"
             aria-label={closeAriaLabel}
           >
             <X size={20} />
@@ -103,12 +108,12 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
         </div>
       )}
 
-      <div className="p-5 overflow-y-auto flex-1">
+      <div className="p-5 pb-7 overflow-y-auto flex-1">
         <div className="flex items-start justify-between gap-3">
           <div>
             <h2
               id={titleId}
-              className="font-serif text-3xl sm:text-4xl text-ink font-medium leading-tight"
+              className="font-serif text-[2rem] text-ink font-medium leading-tight"
             >
               {formatDishTitle(item.name[currentLang])}
             </h2>
@@ -125,7 +130,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
             )}
 
             {hasTreeNuts && (
-              <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-gold/10 text-gold border border-gold/30 text-[11px] font-sans font-medium">
+              <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gold/10 text-gold-dark border border-gold/30 text-sm font-sans font-medium">
                 <AlertTriangle size={11} />
                 <span>
                   {currentLang === 'es' && 'Contiene frutos secos (nueces / almendras)'}
@@ -137,11 +142,11 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
           </div>
 
           <div className="text-right shrink-0">
-            <span className="font-sans text-2xl font-bold text-gold">
-              {formatArsPrice(calculateTotalPrice())}
+            <span className="font-sans text-xl font-semibold text-gold-dark tabular">
+              {fixedUsd ? formatUsdPrice(fixedUsd) : formatArsPrice(calculateTotalPrice())}
             </span>
             {!item.available && (
-              <div className="text-xs font-semibold text-wine uppercase tracking-wider mt-0.5">
+              <div className="text-sm font-semibold text-wine mt-0.5">
                 {currentLang === 'es' && 'Agotado'}
                 {currentLang === 'en' && 'Sold out'}
                 {currentLang === 'pt' && 'Esgotado'}
@@ -153,7 +158,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
         {safety.warnings.length > 0 && (
           <div
             role="alert"
-            className="mt-3.5 p-3 rounded-xl bg-wine/10 border border-wine/30 text-wine text-xs space-y-1"
+            className="mt-3.5 p-3 rounded-xl bg-wine/10 border border-wine/30 text-wine text-sm space-y-1"
           >
             {safety.warnings.map((w, idx) => (
               <p key={idx} className="flex items-start gap-2 font-medium leading-snug">
@@ -165,25 +170,25 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
         )}
 
         {item.description[currentLang] && (
-          <p className="text-sm sm:text-base text-muted leading-relaxed mt-4 pt-3.5 border-t border-line/60">
+          <p className="text-base text-muted leading-relaxed mt-4 pt-3.5 border-t border-line/60">
             {item.description[currentLang]}
           </p>
         )}
 
         {item.modifiers && item.modifiers.length > 0 && (
           <div className="mt-5 pt-4 border-t border-line">
-            <span className="block text-[11px] font-medium uppercase tracking-wider text-muted mb-2.5">
+            <span className="block text-sm font-medium text-ink mb-2.5">
               {isWeeklyDish ? (
                 <>
-                  {currentLang === 'es' && 'Modalidad de servicio:'}
-                  {currentLang === 'en' && 'Service option:'}
-                  {currentLang === 'pt' && 'Modalidade de serviço:'}
+                  {currentLang === 'es' && 'Modalidad'}
+                  {currentLang === 'en' && 'Service'}
+                  {currentLang === 'pt' && 'Modalidade'}
                 </>
               ) : (
                 <>
-                  {currentLang === 'es' && 'Opciones & adicionales (elegí hasta 1):'}
-                  {currentLang === 'en' && 'Options & extras (choose up to 1):'}
-                  {currentLang === 'pt' && 'Opções & adicionais (escolha até 1):'}
+                  {currentLang === 'es' && 'Opciones y adicionales (elegí una)'}
+                  {currentLang === 'en' && 'Options and extras (choose one)'}
+                  {currentLang === 'pt' && 'Opções e adicionais (escolha uma)'}
                 </>
               )}
             </span>
@@ -197,7 +202,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                     type="button"
                     aria-pressed={isChecked}
                     onClick={() => toggleModifier(mod.id)}
-                    className={`w-full flex items-center justify-between p-2.5 rounded-xl border text-xs transition-all text-left ${
+                    className={`w-full min-h-[48px] flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl border text-base transition-colors text-left ${
                       isChecked
                         ? 'bg-wine/5 border-wine text-wine font-medium'
                         : 'bg-cream/60 border-line text-muted hover:border-gold/60'
@@ -205,7 +210,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                   >
                     <div className="flex items-center gap-2">
                       <div
-                        className={`w-4 h-4 rounded-full shrink-0 flex items-center justify-center border ${
+                        className={`w-5 h-5 rounded-full shrink-0 flex items-center justify-center border ${
                           isChecked
                             ? 'bg-wine text-white border-wine'
                             : 'border-muted/40 bg-white'
@@ -217,7 +222,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                     </div>
                     <span
                       className={`font-semibold shrink-0 ${
-                        mod.price < 0 ? 'text-emerald-700' : 'text-gold'
+                        mod.price < 0 ? 'text-emerald-700' : 'text-gold-dark'
                       }`}
                     >
                       {formatSignedPriceDelta(mod.price, currentLang)}

@@ -3,11 +3,14 @@ import { MenuCategory, MenuItem } from '../../db/types';
 import { ArrowLeft, Search, Coffee, CheckCircle2, XCircle, Radio } from 'lucide-react';
 import { DietaryIcons } from '../menu/DietaryIcons';
 import { formatDishTitle } from '../utils/securityAndFormat';
+import { normalizeForSearch } from '../utils/menuSearch';
 
 interface BaristaPanelProps {
   categories: MenuCategory[];
   items: MenuItem[];
   isLiveSync?: boolean;
+  /** Texto del último guardado que falló, o null si todo se guardó bien. */
+  saveError?: string | null;
   onToggleAvailability: (itemId: string) => void;
   onExit: () => void;
 }
@@ -16,20 +19,22 @@ export const BaristaPanel: React.FC<BaristaPanelProps> = ({
   categories,
   items,
   isLiveSync = true,
+  saveError = null,
   onToggleAvailability,
   onExit,
 }) => {
   const [search, setSearch] = useState('');
   const [selectedCat, setSelectedCat] = useState<string>('all');
 
+  const query = normalizeForSearch(search);
   const filteredItems = items.filter((item) => {
-    const matchesSearch = item.name.es.toLowerCase().includes(search.toLowerCase());
+    const matchesSearch = normalizeForSearch(item.name.es).includes(query);
     const matchesCat = selectedCat === 'all' || item.categoryId === selectedCat;
     return matchesSearch && matchesCat;
   });
 
   return (
-    <div className="min-h-screen bg-cream text-ink font-sans pb-16">
+    <div data-clarity-mask="true" className="min-h-screen bg-cream text-ink font-sans pb-16">
       <div className="sticky top-0 z-40 bg-paper border-b border-line px-4 py-3 shadow-xs">
         <div className="max-w-xl mx-auto flex items-center justify-between">
           <button
@@ -65,6 +70,13 @@ export const BaristaPanel: React.FC<BaristaPanelProps> = ({
         </div>
       </div>
 
+      {saveError && (
+        <div className="max-w-xl mx-auto px-4 pt-3">
+          <p role="alert" className="px-4 py-3 rounded-xl bg-wine/10 border border-wine/30 text-wine text-sm font-medium">
+            No se guardó el último cambio: {saveError}
+          </p>
+        </div>
+      )}
       <div className="max-w-xl mx-auto px-4 pt-4">
         <div className="bg-paper rounded-2xl border border-line p-3.5 mb-4 shadow-soft">
           <p className="text-xs text-muted mb-2">
