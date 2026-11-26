@@ -20,6 +20,6 @@ export const STORAGE_KEYS = {
 
 export const BROADCAST_CHANNEL_NAME = 'dorear_realtime_sync_v13';
 
-export const PIN_SALT = 'dorear_sec_2026_';
-export const HASH_BARISTA = '5cb739bd8f2da1e12de0defd98467fffa765215a852dc04be0b7aad6e09b1ea9';
-export const HASH_ADMIN = '4b38af39c2fc4b9f01003f06e798bfe90ba7fa9b315665c489713a55ead2306a';
+// Los PINs del personal ya no están en el código: se guardan (hasheados) en la tabla
+// privada dorear_staff_pins de Supabase y se verifican con la función dorear_staff_role.
+// Para cambiarlos: ver db/migrations/2026-11-24_01_pin_en_servidor.sql (dorear_set_pin).

@@ -10,12 +10,21 @@ import { isSafeImageUrl } from '../../db/stateValidation';
 
 export { isSafeImageUrl };
 
+const arsFormatter = new Intl.NumberFormat('es-AR', {
+  style: 'currency',
+  currency: 'ARS',
+  maximumFractionDigits: 0,
+});
+
 export function formatArsPrice(amount: number): string {
-  return new Intl.NumberFormat('es-AR', {
-    style: 'currency',
-    currency: 'ARS',
-    maximumFractionDigits: 0,
-  }).format(Math.round(amount));
+  return arsFormatter.format(Math.round(amount));
+}
+
+const usdNumber = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 2 });
+
+/** Precio en dólares con la moneda al final, como se lee en la carta: "690 USD". */
+export function formatUsdPrice(amount: number): string {
+  return `${usdNumber.format(amount)} USD`;
 }
 
 export function formatSignedPriceDelta(delta: number, lang: Language = 'es'): string {
@@ -75,14 +84,41 @@ export function openWhatsAppChat(whatsappNumber: string, message: string): void 
   window.open(url, '_blank', 'noopener,noreferrer');
 }
 
+// Palabras que en castellano, inglés y portugués van en minúscula dentro de un título.
+const LOWERCASE_TITLE_WORDS = new Set([
+  'a', 'al', 'con', 'de', 'del', 'e', 'el', 'en', 'la', 'las', 'los', 'o', 'para', 'por',
+  'sin', 'y', 'u', 'and', 'of', 'with', 'in', 'or', 'the', 'da', 'do', 'das', 'dos', 'com',
+  'em', 'na', 'no', 'sem', 'ou',
+]);
+
+// Siglas y unidades que se escriben siempre igual.
+const FIXED_TITLE_WORDS: Record<string, string> = {
+  tacc: 'TACC',
+  ml: 'ml',
+  cc: 'cc',
+  gr: 'gr',
+  kg: 'kg',
+  bbq: 'BBQ',
+};
+
+/**
+ * Normaliza el título de un plato cargado desde el panel (a veces llega TODO EN MAYÚSCULAS
+ * o todo en minúsculas): primera letra de cada palabra en mayúscula, salvo artículos y
+ * preposiciones cortas ("Café con Leche", "Tostado de Jamón y Queso").
+ */
 export function formatDishTitle(rawTitle: string): string {
   const trimmed = rawTitle.trim().replace(/\s+/g, ' ');
   if (!trimmed) return '';
+  let wordIndex = 0;
   return trimmed
     .toLocaleLowerCase('es-AR')
-    .replace(/(^|[\s(/\-"¿¡])(\p{L})/gu, (_match, prefix: string, letter: string) =>
-      `${prefix}${letter.toLocaleUpperCase('es-AR')}`
-    );
+    .replace(/(^|[\s(/\-"¿¡])(\p{L}+)/gu, (_match, prefix: string, word: string) => {
+      const isFirst = wordIndex === 0;
+      wordIndex += 1;
+      if (FIXED_TITLE_WORDS[word]) return `${prefix}${FIXED_TITLE_WORDS[word]}`;
+      if (!isFirst && LOWERCASE_TITLE_WORDS.has(word)) return `${prefix}${word}`;
+      return `${prefix}${word.charAt(0).toLocaleUpperCase('es-AR')}${word.slice(1)}`;
+    });
 }
 
 export function buildLocalizedString(
@@ -118,9 +154,7 @@ export function buildLocalizedString(
 
 export interface DietaryEvaluationResult {
   effectiveDietary: DietaryTag[];
-  invalidatedTags: DietaryTag[];
   activeAllergens: AllergenTag[];
-  conflictsWithActiveFilter: boolean;
   warnings: LocalizedString[];
 }
 
@@ -151,9 +185,9 @@ export function evaluateDishDietarySafety(
           (baseDietary.includes('sin_tacc') || activeDietaryFilter === 'sin_tacc')
         ) {
           warnings.push({
-            es: `Atención: "${mod.name.es}" contiene avena (TACC) y NO es apta para celíacos (Ley 26.588).`,
-            en: `Notice: "${mod.name.en}" contains oats (gluten/TACC) and is not suitable for celiacs.`,
-            pt: `Atenção: "${mod.name.pt}" contém aveia (TACC/glúten) e não é apto para celíacos.`,
+            es: `Atención: "${mod.name.es}" contiene TACC y NO es apto para celíacos (Ley 26.588).`,
+            en: `Notice: "${mod.name.en}" contains gluten (TACC) and is not suitable for celiacs.`,
+            pt: `Atenção: "${mod.name.pt}" contém glúten (TACC) e não é apto para celíacos.`,
           });
         }
         if (
@@ -161,9 +195,9 @@ export function evaluateDishDietarySafety(
           (baseDietary.includes('vegano') || activeDietaryFilter === 'vegano')
         ) {
           warnings.push({
-            es: `Atención: "${mod.name.es}" contiene derivados lácteos y anula la condición Vegano.`,
-            en: `Notice: "${mod.name.en}" contains dairy derivatives and is not vegan.`,
-            pt: `Atenção: "${mod.name.pt}" contém derivados lácteos e não é vegano.`,
+            es: `Atención: "${mod.name.es}" tiene ingredientes de origen animal y deja de ser vegano.`,
+            en: `Notice: "${mod.name.en}" contains animal products and is not vegan.`,
+            pt: `Atenção: "${mod.name.pt}" contém ingredientes de origem animal e não é vegano.`,
           });
         }
         if (
@@ -180,15 +214,9 @@ export function evaluateDishDietarySafety(
     }
   }
 
-  const effectiveDietary = baseDietary.filter((tag) => !invalidated.has(tag));
-  const conflictsWithActiveFilter =
-    activeDietaryFilter !== null && !effectiveDietary.includes(activeDietaryFilter);
-
   return {
-    effectiveDietary,
-    invalidatedTags: Array.from(invalidated),
+    effectiveDietary: baseDietary.filter((tag) => !invalidated.has(tag)),
     activeAllergens: Array.from(allergens),
-    conflictsWithActiveFilter,
     warnings,
   };
 }

@@ -1,7 +1,8 @@
 import React from 'react';
 import { Language, MenuItem } from '../../db/types';
 import { DietaryIcons } from './DietaryIcons';
-import { formatArsPrice, formatDishTitle } from '../utils/securityAndFormat';
+import { formatArsPrice, formatDishTitle, formatUsdPrice } from '../utils/securityAndFormat';
+import { getFixedUsdPrice } from '../../db/fixedPrices';
 
 interface MenuItemCardProps {
   item: MenuItem;
@@ -9,56 +10,56 @@ interface MenuItemCardProps {
   onOpenDetail: (item: MenuItem) => void;
 }
 
-export const MenuItemCard: React.FC<MenuItemCardProps> = ({
-  item,
-  currentLang,
-  onOpenDetail,
-}) => {
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      onOpenDetail(item);
-    }
-  };
+const SOLD_OUT: Record<Language, string> = { es: 'Agotado', en: 'Sold out', pt: 'Esgotado' };
 
-  const soldOutLabel =
-    currentLang === 'es' ? 'Agotado' : currentLang === 'en' ? 'Sold Out' : 'Esgotado';
-  const statusLabel = item.available ? formatArsPrice(item.price) : soldOutLabel;
-
+/**
+ * Un plato de la carta. Semántica: <article> con su <h3>; dentro del título va un
+ * <button> real que abre el detalle. Una capa invisible (after:inset-0) estira el
+ * botón a toda la tarjeta, así se puede tocar en cualquier parte y el lector de
+ * pantalla anuncia "Ristretto, botón" seguido de la descripción y el precio.
+ */
+export const MenuItemCard: React.FC<MenuItemCardProps> = ({ item, currentLang, onOpenDetail }) => {
   const formattedName = formatDishTitle(item.name[currentLang]);
+  const description = item.description[currentLang];
+  const fixedUsd = getFixedUsdPrice(item);
 
   return (
     <article
-      role="button"
-      tabIndex={0}
-      aria-label={`${formattedName} · ${statusLabel}`}
-      onClick={() => onOpenDetail(item)}
-      onKeyDown={handleKeyDown}
-      className="group min-h-[48px] py-4 border-b border-line/70 flex justify-between items-start gap-4 cursor-pointer hover:bg-paper/40 transition-colors px-2 rounded-xl -mx-2"
+      className={`group relative py-3 border-b border-line/70 last:border-b-0 flex justify-between items-start gap-4 active:bg-paper hover:bg-paper/60 transition-colors px-5 -mx-5 focus-within:bg-paper/60 ${
+        item.available ? '' : 'opacity-60'
+      }`}
     >
-      <div className="flex-1 min-w-0 pr-1">
-        <h3 className="font-serif text-2xl sm:text-3xl text-ink font-medium leading-snug group-hover:text-gold transition-colors inline-flex items-center gap-2 flex-wrap">
-          <span>{formattedName}</span>
+      <div className="flex-1 min-w-0">
+        <h3 className="font-serif text-[1.25rem] text-ink font-semibold leading-tight text-pretty">
+          <button
+            type="button"
+            onClick={() => onOpenDetail(item)}
+            className="text-left after:absolute after:inset-0 after:content-[''] focus-visible:outline-none focus-visible:after:outline focus-visible:after:outline-2 focus-visible:after:outline-gold focus-visible:after:-outline-offset-2"
+          >
+            {formattedName}
+          </button>
           {item.dietary && item.dietary.length > 0 && (
-            <DietaryIcons tags={item.dietary} currentLang={currentLang} size="md" />
+            <span className="ml-2 inline-flex align-[1px]">
+              <DietaryIcons tags={item.dietary} currentLang={currentLang} plain />
+            </span>
           )}
         </h3>
 
-        {item.description[currentLang] && (
-          <p className="text-sm sm:text-base text-muted leading-relaxed mt-1">
-            {item.description[currentLang]}
-          </p>
+        {description && (
+          <p className="text-[15px] text-muted leading-snug mt-0.5">{description}</p>
         )}
       </div>
 
-      <div className="text-right shrink-0 pt-0.5">
+      <div className="text-right shrink-0 pt-1">
         {item.available ? (
-          <span className="font-sans text-base sm:text-lg font-bold text-gold tracking-tight whitespace-nowrap">
-            {formatArsPrice(item.price)}
-          </span>
+          <>
+            <span className="block font-sans text-[15px] font-semibold text-gold-dark tabular whitespace-nowrap">
+              {fixedUsd ? formatUsdPrice(fixedUsd) : formatArsPrice(item.price)}
+            </span>
+          </>
         ) : (
-          <span className="inline-block text-xs font-semibold text-wine bg-wine/10 border border-wine/30 px-2.5 py-1 rounded-full whitespace-nowrap">
-            {soldOutLabel}
+          <span className="inline-block text-[13px] font-semibold text-wine bg-wine/10 border border-wine/25 px-2 py-0.5 rounded-full whitespace-nowrap">
+            {SOLD_OUT[currentLang]}
           </span>
         )}
       </div>

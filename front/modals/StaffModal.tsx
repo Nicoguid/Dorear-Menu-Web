@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useId, useCallback } from 'react';
 import { X, Lock, ShieldAlert, Clock } from 'lucide-react';
-import { HASH_ADMIN, HASH_BARISTA, PIN_SALT } from '../../db/storeSettings';
 import { ModalDialog } from './ModalDialog';
+import { setStaffSessionPin, StaffRole, verifyStaffPin } from '../utils/menuSync';
 
 interface StaffModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onLoginSuccess: (role: 'barista' | 'admin', pin?: string) => void;
+  onLoginSuccess: (role: StaffRole) => void;
 }
 
 const ATTEMPTS_STORAGE_KEY = 'dorear_pin_failed_attempts';
@@ -63,17 +63,6 @@ function clearLockout(): void {
   } catch {}
 }
 
-async function computeSha256(str: string): Promise<string> {
-  if (typeof crypto !== 'undefined' && crypto.subtle && typeof crypto.subtle.digest === 'function') {
-    const data = new TextEncoder().encode(str);
-    const hash = await crypto.subtle.digest('SHA-256', data);
-    return Array.from(new Uint8Array(hash))
-      .map((b) => b.toString(16).padStart(2, '0'))
-      .join('');
-  }
-  return '';
-}
-
 export const StaffModal: React.FC<StaffModalProps> = ({
   isOpen,
   onClose,
@@ -81,6 +70,7 @@ export const StaffModal: React.FC<StaffModalProps> = ({
 }) => {
   const [pin, setPin] = useState('');
   const [error, setError] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
   const [cooldownRemaining, setCooldownRemaining] = useState<number>(0);
   const titleId = useId();
@@ -91,6 +81,7 @@ export const StaffModal: React.FC<StaffModalProps> = ({
     if (!isOpen) {
       setPin('');
       setError(false);
+      setServerError(null);
       setIsVerifying(false);
       return;
     }
@@ -122,36 +113,26 @@ export const StaffModal: React.FC<StaffModalProps> = ({
       }
 
       setIsVerifying(true);
-      // Retraso artificial (350ms) para evitar bots o scripts automatizados de alta velocidad
-      await new Promise((resolve) => setTimeout(resolve, 350));
-
-      try {
-        const hash = await computeSha256(PIN_SALT + inputPin);
-        if (hash === HASH_BARISTA) {
-          clearLockout();
-          try {
-            sessionStorage.setItem('dorear_session_pin', inputPin);
-          } catch {}
-          onLoginSuccess('barista', inputPin);
-          setPin('');
-          setIsVerifying(false);
-          onClose();
-          return;
-        }
-        if (hash === HASH_ADMIN) {
-          clearLockout();
-          try {
-            sessionStorage.setItem('dorear_session_pin', inputPin);
-          } catch {}
-          onLoginSuccess('admin', inputPin);
-          setPin('');
-          setIsVerifying(false);
-          onClose();
-          return;
-        }
-      } catch {}
+      setServerError(null);
+      // El PIN se verifica en la base de datos, que también cuenta los intentos fallidos.
+      const { role, error: verifyError } = await verifyStaffPin(inputPin);
+      if (role) {
+        clearLockout();
+        setStaffSessionPin(inputPin);
+        onLoginSuccess(role);
+        setPin('');
+        setIsVerifying(false);
+        onClose();
+        return;
+      }
 
       setIsVerifying(false);
+      if (verifyError) {
+        // Sin conexión o bloqueo de la base por demasiados intentos: no cuenta como error de PIN.
+        setServerError(verifyError);
+        setTimeout(() => setPin(''), 600);
+        return;
+      }
       setError(true);
       const { remainingSeconds } = recordFailedAttempt();
       if (remainingSeconds > 0) {
@@ -209,6 +190,7 @@ export const StaffModal: React.FC<StaffModalProps> = ({
       backdropClassName="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4"
       panelClassName="w-full max-w-xs bg-paper rounded-3xl border border-line p-6 shadow-modal text-center"
     >
+      <div data-clarity-mask="true">
       <div className="flex justify-between items-center mb-4">
         <h2 id={titleId} className="flex items-center gap-2 text-wine font-serif text-lg">
           <Lock size={18} />
@@ -259,6 +241,10 @@ export const StaffModal: React.FC<StaffModalProps> = ({
             <span className="font-mono font-bold text-wine">{cooldownRemaining}s</span> para volver a intentar.
           </p>
         </div>
+      ) : serverError ? (
+        <p role="alert" className="text-sm text-wine font-medium mb-3">
+          {serverError}
+        </p>
       ) : error ? (
         <p
           role="alert"
@@ -313,6 +299,7 @@ export const StaffModal: React.FC<StaffModalProps> = ({
         >
           Borrar
         </button>
+      </div>
       </div>
     </ModalDialog>
   );

@@ -3,6 +3,7 @@ export default {
   content: [
     "./index.html",
     "./front/**/*.{js,ts,jsx,tsx}",
+    "./back/seoPlugin.ts",
   ],
   theme: {
     extend: {
@@ -10,22 +11,20 @@ export default {
         cream: '#faf7f0',
         paper: '#fffcf7',
         ink: '#372e25',
-        muted: '#766b5d',
+        muted: '#685d50',
         gold: {
           DEFAULT: '#a67c3f',
-          light: '#c99d5d',
           dark: '#87622f',
         },
         wine: {
           DEFAULT: '#672d35',
           dark: '#4e1e25',
-          light: '#843b45',
         },
         line: '#e6dac6',
       },
       fontFamily: {
         serif: ['"Cormorant Garamond"', 'Georgia', 'serif'],
-        sans: ['"DM Sans"', 'system-ui', 'sans-serif'],
+        sans: ['"DM Sans Variable"', '"DM Sans"', 'system-ui', 'sans-serif'],
       },
       boxShadow: {
         '2xs': '0 1px 2px 0 rgba(55, 46, 37, 0.04)',
@@ -33,11 +32,19 @@ export default {
         soft: '0 4px 20px -2px rgba(55, 46, 37, 0.08)',
         modal: '0 -4px 30px rgba(55, 46, 37, 0.18)',
       },
+      keyframes: {
+        'fade-in': { from: { opacity: '0' }, to: { opacity: '1' } },
+        'sheet-up': {
+          from: { transform: 'translateY(24px)', opacity: '0' },
+          to: { transform: 'translateY(0)', opacity: '1' },
+        },
+      },
+      animation: {
+        'fade-in': 'fade-in 180ms ease-out both',
+        'sheet-up': 'sheet-up 260ms cubic-bezier(0.22, 1, 0.36, 1) both',
+      },
       backdropBlur: {
         xs: '2px',
-      },
-      scale: {
-        102: '1.02',
       },
       spacing: {
         5.5: '1.375rem',

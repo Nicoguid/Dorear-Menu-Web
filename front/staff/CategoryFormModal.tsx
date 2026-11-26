@@ -1,12 +1,14 @@
 import React, { useState, useId } from 'react';
 import { Language, MenuCategory } from '../../db/types';
-import { FolderPlus, X } from 'lucide-react';
+import { FolderPlus, Pencil, X } from 'lucide-react';
 import { ModalDialog } from '../modals/ModalDialog';
 import { LanguageTabs } from './ItemFormModal';
 import { buildLocalizedString } from '../utils/securityAndFormat';
 
 interface CategoryFormModalProps {
   existingCategories: MenuCategory[];
+  /** Si viene, el formulario edita esta categoría en vez de crear una nueva. */
+  category?: MenuCategory;
   onClose: () => void;
   onSave: (category: MenuCategory) => void;
 }
@@ -23,22 +25,24 @@ function slugify(text: string): string {
 
 export const CategoryFormModal: React.FC<CategoryFormModalProps> = ({
   existingCategories,
+  category,
   onClose,
   onSave,
 }) => {
+  const isEditing = Boolean(category);
   const titleId = useId();
   const [activeTab, setActiveTab] = useState<Language>('es');
 
   const [names, setNames] = useState<Record<Language, string>>({
-    es: '',
-    en: '',
-    pt: '',
+    es: category?.name.es || '',
+    en: category?.name.en || '',
+    pt: category?.name.pt || '',
   });
 
   const [descs, setDescs] = useState<Record<Language, string>>({
-    es: '',
-    en: '',
-    pt: '',
+    es: category?.description.es || '',
+    en: category?.description.en || '',
+    pt: category?.description.pt || '',
   });
 
   const [formError, setFormError] = useState<string | null>(null);
@@ -54,11 +58,34 @@ export const CategoryFormModal: React.FC<CategoryFormModalProps> = ({
     }
 
     const nameExists = existingCategories.some(
-      (c) => c.name.es.trim().toLowerCase() === cleanEsName.toLowerCase()
+      (c) =>
+        c.id !== category?.id && c.name.es.trim().toLowerCase() === cleanEsName.toLowerCase()
     );
     if (nameExists) {
       setFormError(`Ya existe una categoría llamada "${cleanEsName}".`);
       setActiveTab('es');
+      return;
+    }
+
+    const cleanEsDescription = descs.es.trim();
+
+    if (category) {
+      // Edición: mismo id y mismo orden, así los platos siguen asociados a la categoría.
+      // El formulario ya muestra las traducciones actuales en cada pestaña, así que
+      // guardamos lo que quedó escrito; si una queda vacía, usa el texto en español.
+      onSave({
+        ...category,
+        name: {
+          es: cleanEsName,
+          en: names.en.trim() || cleanEsName,
+          pt: names.pt.trim() || cleanEsName,
+        },
+        description: {
+          es: cleanEsDescription,
+          en: descs.en.trim() || cleanEsDescription,
+          pt: descs.pt.trim() || cleanEsDescription,
+        },
+      });
       return;
     }
 
@@ -98,14 +125,16 @@ export const CategoryFormModal: React.FC<CategoryFormModalProps> = ({
       <div className="flex items-center justify-between p-4 border-b border-line bg-paper sticky top-0 z-10">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-gold/15 flex items-center justify-center text-gold">
-            <FolderPlus size={18} />
+            {isEditing ? <Pencil size={16} /> : <FolderPlus size={18} />}
           </div>
           <div>
             <h3 id={titleId} className="font-serif font-semibold text-ink text-base">
-              Nueva Categoría
+              {isEditing ? 'Editar categoría' : 'Nueva categoría'}
             </h3>
             <p className="text-[11px] text-muted">
-              Creá una nueva sección para organizar la carta
+              {isEditing
+                ? 'Cambiá el nombre o la frase. Los platos quedan donde están.'
+                : 'Creá una nueva sección para organizar la carta'}
             </p>
           </div>
         </div>
@@ -201,8 +230,8 @@ export const CategoryFormModal: React.FC<CategoryFormModalProps> = ({
             type="submit"
             className="min-h-[40px] px-5 py-2 bg-wine hover:bg-wine-dark text-white rounded-xl text-xs font-medium flex items-center gap-1.5 shadow-xs transition-colors"
           >
-            <FolderPlus size={15} />
-            <span>Crear Categoría</span>
+            {isEditing ? <Pencil size={14} /> : <FolderPlus size={15} />}
+            <span>{isEditing ? 'Guardar cambios' : 'Crear categoría'}</span>
           </button>
         </div>
       </form>

@@ -29,7 +29,20 @@
         },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://images.unsplash.com https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+          "value": "default-src 'self'; script-src 'self' https://www.clarity.ms https://*.clarity.ms https://*.googletagmanager.com; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://images.unsplash.com https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.clarity.ms https://c.bing.com https://*.googletagmanager.com https://*.google-analytics.com https://*.analytics.google.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+        }
+      ]
+    },
+    {
+      "source": "/(carta\\.md|llms\\.txt)",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "text/plain; charset=utf-8"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
         }
       ]
     },
@@ -43,10 +56,32 @@
       ]
     }
   ],
-  "rewrites": [
+  "crons": [
     {
-      "source": "/((?!api/|assets/).*)",
-      "destination": "/index.html"
+      "path": "/api/rebuild",
+      "schedule": "0 9 * * *"
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/menu",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/carta",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/en",
+      "destination": "/en/",
+      "permanent": true
+    },
+    {
+      "source": "/pt",
+      "destination": "/pt/",
+      "permanent": true
     }
   ]
 }

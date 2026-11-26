@@ -1,4 +1,4 @@
-import { supabase } from './supabaseClient';
+import { getSupabase } from './supabaseClient';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import { MenuCategory, MenuItem, StoreSettings, WeeklyDish } from '../../db/types';
 import {
@@ -18,6 +18,71 @@ import {
 
 export type { DorearSharedState };
 
+export type StaffRole = 'admin' | 'barista';
+
+/** Resultado de un guardado: si falla, `error` trae un texto para mostrarle a la dueña. */
+export type SaveResult = { ok: true } | { ok: false; error: string };
+
+// ---------------------------------------------------------------------------
+// Sesión del personal
+// ---------------------------------------------------------------------------
+// El PIN queda solo en memoria (no en sessionStorage): se pierde al recargar, igual que
+// el modo personal. La base de datos lo vuelve a verificar en cada guardado.
+let staffPin = '';
+
+export function setStaffSessionPin(pin: string): void {
+  staffPin = pin;
+}
+
+export function clearStaffSession(): void {
+  staffPin = '';
+}
+
+const RPC_ERRORS: Record<string, string> = {
+  pin: 'El PIN ya no es válido. Salí del panel y volvé a entrar.',
+  forbidden: 'Este PIN no tiene permiso para hacer ese cambio.',
+  invalid: 'La carta tiene datos inválidos y no se guardó.',
+  empty: 'Todavía no hay una carta guardada en la base.',
+};
+
+async function callStaffRpc(fn: string, args: Record<string, unknown>): Promise<SaveResult> {
+  const supabase = await getSupabase();
+  if (!supabase) return { ok: false, error: 'No hay conexión con la base de datos.' };
+  try {
+    const { data, error } = await supabase.rpc(fn, args);
+    if (error) return { ok: false, error: error.message || 'No se pudo guardar.' };
+    const result = data as { ok?: boolean; error?: string } | null;
+    if (!result?.ok) {
+      return { ok: false, error: RPC_ERRORS[result?.error || ''] || 'No se pudo guardar.' };
+    }
+    return { ok: true };
+  } catch {
+    return { ok: false, error: 'Sin conexión: el cambio quedó solo en este dispositivo.' };
+  }
+}
+
+/**
+ * Verifica el PIN en la base de datos (función dorear_staff_role). La base lleva la
+ * cuenta de intentos fallidos por IP, así que el límite no se saltea recargando.
+ */
+export async function verifyStaffPin(
+  pin: string
+): Promise<{ role: StaffRole | null; error?: string }> {
+  const supabase = await getSupabase();
+  if (!supabase) return { role: null, error: 'No hay conexión con la base de datos.' };
+  try {
+    const { data, error } = await supabase.rpc('dorear_staff_role', { p_pin: pin });
+    if (error) return { role: null, error: error.message };
+    return { role: data === 'admin' || data === 'barista' ? data : null };
+  } catch {
+    return { role: null, error: 'Sin conexión. Probá de nuevo en un momento.' };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Copia local (para abrir la carta al instante y sin señal)
+// ---------------------------------------------------------------------------
+
 export function loadValidatedLocalState(defaults: {
   categories?: MenuCategory[];
   items: MenuItem[];
@@ -31,57 +96,29 @@ export function loadValidatedLocalState(defaults: {
   let storeSettings = defaults.storeSettings;
   let updatedAt = 0;
 
-  try {
-    const rawCategories = localStorage.getItem(STORAGE_KEYS.CATEGORIES);
-    if (rawCategories) {
-      const parsed = JSON.parse(rawCategories);
-      if (isValidCategoryArray(parsed)) categories = parsed;
+  const read = (key: string): unknown => {
+    try {
+      const raw = localStorage.getItem(key);
+      return raw === null ? undefined : JSON.parse(raw);
+    } catch {
+      return undefined;
     }
-  } catch {}
+  };
 
-  try {
-    const rawItems = localStorage.getItem(STORAGE_KEYS.ITEMS);
-    if (rawItems) {
-      const parsed = JSON.parse(rawItems);
-      if (isValidMenuItemArray(parsed)) items = parsed;
-    }
-  } catch {}
-
-  try {
-    const rawWeekly = localStorage.getItem(STORAGE_KEYS.WEEKLY);
-    if (rawWeekly) {
-      const parsed = JSON.parse(rawWeekly);
-      if (isValidWeeklyDishArray(parsed)) weeklyDishes = parsed;
-    }
-  } catch {}
-
-  try {
-    const rawOverride = localStorage.getItem(STORAGE_KEYS.OVERRIDE);
-    if (rawOverride !== null) {
-      const parsed = JSON.parse(rawOverride);
-      if (typeof parsed === 'number' && Number.isInteger(parsed) && parsed >= 1 && parsed <= 5) {
-        weeklyOverrideDay = parsed;
-      }
-    }
-  } catch {}
-
-  try {
-    const rawSettings = localStorage.getItem(STORAGE_KEYS.SETTINGS);
-    if (rawSettings) {
-      const parsed = JSON.parse(rawSettings);
-      if (isValidStoreSettings(parsed)) storeSettings = parsed;
-    }
-  } catch {}
-
-  try {
-    const rawUpdated = localStorage.getItem(STORAGE_KEYS.UPDATED_AT);
-    if (rawUpdated) {
-      const parsed = Number(rawUpdated);
-      if (Number.isFinite(parsed) && parsed > 0) updatedAt = parsed;
-    }
-  } catch {
-    updatedAt = 0;
+  const rawCategories = read(STORAGE_KEYS.CATEGORIES);
+  if (isValidCategoryArray(rawCategories)) categories = rawCategories;
+  const rawItems = read(STORAGE_KEYS.ITEMS);
+  if (isValidMenuItemArray(rawItems)) items = rawItems;
+  const rawWeekly = read(STORAGE_KEYS.WEEKLY);
+  if (isValidWeeklyDishArray(rawWeekly)) weeklyDishes = rawWeekly;
+  const rawOverride = read(STORAGE_KEYS.OVERRIDE);
+  if (typeof rawOverride === 'number' && Number.isInteger(rawOverride) && rawOverride >= 1 && rawOverride <= 5) {
+    weeklyOverrideDay = rawOverride;
   }
+  const rawSettings = read(STORAGE_KEYS.SETTINGS);
+  if (isValidStoreSettings(rawSettings)) storeSettings = rawSettings;
+  const rawUpdated = Number(read(STORAGE_KEYS.UPDATED_AT));
+  if (Number.isFinite(rawUpdated) && rawUpdated > 0) updatedAt = rawUpdated;
 
   return {
     version: CURRENT_STATE_VERSION,
@@ -108,108 +145,85 @@ export function saveLocalStateSnapshot(state: DorearSharedState): void {
     }
     localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(state.storeSettings));
     localStorage.setItem(STORAGE_KEYS.UPDATED_AT, String(state.updatedAt));
-  } catch (e) {
-    console.error('Error persisting state to localStorage', e);
+  } catch {
+    // Sin espacio o en modo privado: la carta sigue andando, solo no queda copia local.
   }
 }
 
 export function clearLocalStateSnapshot(): void {
   try {
     Object.values(STORAGE_KEYS).forEach((k) => localStorage.removeItem(k));
-    const legacyKeys = [
-      'dorear_menu_items_v9',
-      'dorear_weekly_dishes_v9',
-      'dorear_weekly_override',
-      'dorear_store_settings_v1',
-      'dorear_menu_items_v10',
-      'dorear_weekly_dishes_v10',
-      'dorear_weekly_override_v10',
-      'dorear_store_settings_v10',
-      'dorear_state_updated_at_v10',
-      'dorear_menu_items_v11',
-      'dorear_weekly_dishes_v11',
-      'dorear_weekly_override_v11',
-      'dorear_store_settings_v11',
-      'dorear_state_updated_at_v11',
-      'dorear_menu_items_v12',
-      'dorear_weekly_dishes_v12',
-      'dorear_weekly_override_v12',
-      'dorear_store_settings_v12',
-      'dorear_state_updated_at_v12',
-    ];
-    legacyKeys.forEach((k) => localStorage.removeItem(k));
-  } catch (e) {
-    console.error('Error clearing localStorage', e);
+  } catch {
+    // ignorar
   }
 }
 
-export function broadcastStateChange(
-  state: DorearSharedState | { reset: true }
-): void {
+/**
+ * Borra las copias de versiones viejas de la carta (claves _v9 a _v12) que pueden
+ * haber quedado en celulares de clientes frecuentes. Se corre una vez al abrir.
+ */
+export function removeLegacyLocalKeys(): void {
+  try {
+    const current = new Set<string>(Object.values(STORAGE_KEYS));
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('dorear_') && !current.has(key) && !key.startsWith('dorear_pin_')) {
+        localStorage.removeItem(key);
+      }
+    }
+  } catch {
+    // ignorar
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Guardar cambios del personal
+// ---------------------------------------------------------------------------
+
+function notifyOtherTabs(payload: DorearSharedState | { reset: true }): void {
   try {
     if ('BroadcastChannel' in window) {
       const bc = new BroadcastChannel(BROADCAST_CHANNEL_NAME);
-      bc.postMessage(state);
+      bc.postMessage(payload);
       bc.close();
     }
-  } catch {}
-
-  let staffPin = '';
-  try {
-    staffPin = sessionStorage.getItem('dorear_session_pin') || '';
-  } catch {}
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
-  if (staffPin) {
-    headers['X-Dorear-Pin'] = staffPin;
-  }
-
-  if (supabase) {
-    if ('reset' in state && state.reset) {
-      Promise.resolve(
-        supabase
-          .from('dorear_state')
-          .delete()
-          .eq('id', 'current')
-      ).catch(() => {});
-    } else {
-      const fullState = state as DorearSharedState;
-      Promise.resolve(
-        supabase
-          .from('dorear_state')
-          .upsert({
-            id: 'current',
-            state: fullState,
-            updated_at: fullState.updatedAt || Date.now(),
-          })
-      )
-        .then((res) => {
-          if (res?.error) console.warn('Supabase sync warning:', res.error.message);
-        })
-        .catch(() => {});
-    }
-  } else {
-    fetch('/api/menu-state', {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(state),
-    })
-      .then(async (res) => {
-        if (!res.ok) return;
-        const contentType = res.headers.get('content-type') || '';
-        if (!contentType.includes('application/json')) return;
-        const data = await res.json();
-        if (data && data.state) {
-          const validated = validateSharedStatePayload(data.state);
-          if (validated) {
-            saveLocalStateSnapshot(validated);
-          }
-        }
-      })
-      .catch(() => {});
+  } catch {
+    // ignorar
   }
 }
+
+/** Guarda la carta completa (solo la dueña). */
+export function saveFullState(state: DorearSharedState): Promise<SaveResult> {
+  notifyOtherTabs(state);
+  return callStaffRpc('dorear_save_state', { p_pin: staffPin, p_state: state });
+}
+
+/**
+ * Marca un producto como agotado o disponible. Manda solo ese cambio, así dos
+ * personas tocando la barra a la vez no se pisan la carta entre sí.
+ */
+export function saveAvailability(
+  state: DorearSharedState,
+  itemId: string,
+  available: boolean
+): Promise<SaveResult> {
+  notifyOtherTabs(state);
+  return callStaffRpc('dorear_set_availability', {
+    p_pin: staffPin,
+    p_item_id: itemId,
+    p_available: available,
+  });
+}
+
+/** Restaura la carta original del código en todos los dispositivos (solo la dueña). */
+export function resetSharedState(): Promise<SaveResult> {
+  notifyOtherTabs({ reset: true });
+  return callStaffRpc('dorear_reset_state', { p_pin: staffPin });
+}
+
+// ---------------------------------------------------------------------------
+// Recibir cambios en vivo
+// ---------------------------------------------------------------------------
 
 export function subscribeToRealtimeSync(
   onReceiveState: (state: DorearSharedState) => void,
@@ -218,7 +232,8 @@ export function subscribeToRealtimeSync(
 ): () => void {
   let bc: BroadcastChannel | null = null;
   let supabaseChannel: RealtimeChannel | null = null;
-  let eventSource: EventSource | null = null;
+  let cancelled = false;
+  let supabaseClient: Awaited<ReturnType<typeof getSupabase>> = null;
 
   const handlePayload = (payload: unknown) => {
     if (!payload || typeof payload !== 'object') return;
@@ -228,38 +243,28 @@ export function subscribeToRealtimeSync(
       return;
     }
     const validated = validateSharedStatePayload(data);
-    if (validated) {
-      onReceiveState(validated);
-    }
+    if (validated) onReceiveState(validated);
   };
 
-  if (supabase) {
-    const client = supabase;
+  getSupabase().then((client) => {
+    if (!client || cancelled) return;
+    supabaseClient = client;
     Promise.resolve(
-      client
-        .from('dorear_state')
-        .select('state, updated_at')
-        .eq('id', 'current')
-        .maybeSingle()
+      client.from('dorear_state').select('state, updated_at').eq('id', 'current').maybeSingle()
     )
       .then((res) => {
-        if (!res?.error && res?.data && res.data.state) {
+        if (!res?.error && res?.data?.state) {
           onSyncStatusChange?.(true);
           handlePayload(res.data.state);
         }
       })
-      .catch(() => {});
+      .catch(() => onSyncStatusChange?.(false));
 
     supabaseChannel = client
       .channel('dorear_realtime_menu')
       .on(
         'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'dorear_state',
-          filter: 'id=eq.current',
-        },
+        { event: '*', schema: 'public', table: 'dorear_state', filter: 'id=eq.current' },
         (payload) => {
           onSyncStatusChange?.(true);
           if (payload.eventType === 'DELETE') {
@@ -267,70 +272,27 @@ export function subscribeToRealtimeSync(
             return;
           }
           const row = payload.new as { state?: unknown } | null;
-          if (row && row.state) {
-            handlePayload(row.state);
-          }
+          if (row?.state) handlePayload(row.state);
         }
       )
       .subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          onSyncStatusChange?.(true);
-        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-          onSyncStatusChange?.(false);
-        }
+        if (status === 'SUBSCRIBED') onSyncStatusChange?.(true);
+        else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') onSyncStatusChange?.(false);
       });
-  } else {
-    fetch('/api/menu-state', { cache: 'no-store' })
-      .then((res) => {
-        const contentType = res.headers.get('content-type') || '';
-        if (res.ok && contentType.includes('application/json')) {
-          onSyncStatusChange?.(true);
-          return res.json();
-        }
-        onSyncStatusChange?.(false);
-        return null;
-      })
-      .then((data) => {
-        if (data && data.state) {
-          handlePayload(data.state);
-        }
-      })
-      .catch(() => {
-        onSyncStatusChange?.(false);
-      });
-
-    try {
-      if ('EventSource' in window) {
-        eventSource = new EventSource('/api/menu-stream');
-        eventSource.onopen = () => {
-          onSyncStatusChange?.(true);
-        };
-        eventSource.onerror = () => {
-          onSyncStatusChange?.(false);
-        };
-        eventSource.onmessage = (event) => {
-          try {
-            handlePayload(JSON.parse(event.data));
-          } catch {}
-        };
-      }
-    } catch {}
-  }
+  });
 
   try {
     if ('BroadcastChannel' in window) {
       bc = new BroadcastChannel(BROADCAST_CHANNEL_NAME);
-      bc.onmessage = (event) => {
-        handlePayload(event.data);
-      };
+      bc.onmessage = (event) => handlePayload(event.data);
     }
-  } catch {}
+  } catch {
+    // ignorar
+  }
 
   return () => {
-    if (bc) bc.close();
-    if (eventSource) eventSource.close();
-    if (supabaseChannel && supabase) {
-      supabase.removeChannel(supabaseChannel);
-    }
+    cancelled = true;
+    bc?.close();
+    if (supabaseChannel && supabaseClient) supabaseClient.removeChannel(supabaseChannel);
   };
 }

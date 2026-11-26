@@ -11,6 +11,9 @@ import { getOptimizedImageUrl } from '../utils/imageUrl';
 import { ItemFormModal } from './ItemFormModal';
 import { WeeklyDishFormModal } from './WeeklyDishFormModal';
 import { CategoryFormModal } from './CategoryFormModal';
+import { useDragScroll } from '../layout/useDragScroll';
+import { getFixedUsdPrice } from '../../db/fixedPrices';
+import { formatUsdPrice } from '../utils/securityAndFormat';
 import {
   ArrowLeft,
   Save,
@@ -28,6 +31,10 @@ import {
   Users,
   Radio,
   FolderPlus,
+  ChevronDown,
+  ChevronUp,
+  ArrowUpDown,
+  X,
 } from 'lucide-react';
 
 interface AdminPanelProps {
@@ -36,6 +43,8 @@ interface AdminPanelProps {
   weeklyDishes: WeeklyDish[];
   weeklyOverrideDay: number | null;
   isLiveSync?: boolean;
+  /** Texto del último guardado que falló, o null si todo se guardó bien. */
+  saveError?: string | null;
   onSetWeeklyOverrideDay: (day: number | null) => void;
   onUpdateItemPrice: (itemId: string, newPrice: number) => void;
   onToggleAvailability: (itemId: string) => void;
@@ -43,7 +52,11 @@ interface AdminPanelProps {
   onUpdateItem: (updatedItem: MenuItem) => void;
   onDeleteItem: (itemId: string) => void;
   onAddCategory: (newCategory: MenuCategory) => void;
-  onDeleteCategory?: (categoryId: string) => void;
+  onUpdateCategory?: (category: MenuCategory) => void;
+  /** Si `moveItemsTo` viene, los platos pasan a esa categoría; si no, se borran con ella. */
+  onDeleteCategory?: (categoryId: string, moveItemsTo?: string) => void;
+  /** Mueve un plato a otra posición (0 = primero) dentro de su categoría. */
+  onReorderItem?: (itemId: string, targetPosition: number) => void;
   onUpdateWeeklyDish: (updatedDish: WeeklyDish) => void;
   settings: StoreSettings;
   onUpdateSettings: (newSettings: StoreSettings) => void;
@@ -57,6 +70,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   weeklyDishes,
   weeklyOverrideDay,
   isLiveSync = true,
+  saveError = null,
   onSetWeeklyOverrideDay,
   onUpdateItemPrice,
   onToggleAvailability,
@@ -64,7 +78,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   onUpdateItem,
   onDeleteItem,
   onAddCategory,
+  onUpdateCategory,
   onDeleteCategory,
+  onReorderItem,
   onUpdateWeeklyDish,
   settings,
   onUpdateSettings,
@@ -93,6 +109,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const [isCreatingItem, setIsCreatingItem] = useState(false);
   const [isCreatingCategory, setIsCreatingCategory] = useState(false);
   const [editingWeeklyDish, setEditingWeeklyDish] = useState<WeeklyDish | null>(null);
+  const [isWeeklyOpen, setIsWeeklyOpen] = useState(false);
+  const [isReordering, setIsReordering] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<MenuCategory | null>(null);
+  const categoryScroller = useDragScroll<HTMLDivElement>();
+  const [deletingCategory, setDeletingCategory] = useState<MenuCategory | null>(null);
+  const [moveTargetId, setMoveTargetId] = useState<string>('');
 
   const showFeedback = (msg: string) => {
     setErrorMsg(null);
@@ -161,30 +183,64 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     }
   };
 
+  const finishCategoryDelete = (cat: MenuCategory, message: string) => {
+    const remaining = categories.filter((c) => c.id !== cat.id);
+    if (remaining.length > 0) setSelectedCat(remaining[0].id);
+    setDeletingCategory(null);
+    setIsReordering(false);
+    showFeedback(message);
+  };
+
   const handleDeleteCategoryClick = (cat: MenuCategory) => {
     if (categories.length <= 1) {
       showError('No podés eliminar la única categoría existente.');
       return;
     }
     const count = items.filter((i) => i.categoryId === cat.id).length;
-    if (count > 0) {
-      showError(
-        `La categoría "${cat.name.es}" tiene ${count} plato(s). Primero eliminalos o asignales otra categoría.`
-      );
+    if (count === 0) {
+      if (window.confirm(`¿Segura que querés eliminar la categoría vacía "${cat.name.es}"?`)) {
+        onDeleteCategory?.(cat.id);
+        finishCategoryDelete(cat, `Categoría "${cat.name.es}" eliminada.`);
+      }
       return;
     }
-    if (window.confirm(`¿Segura que querés eliminar la categoría vacía "${cat.name.es}"?`)) {
-      onDeleteCategory?.(cat.id);
-      const remaining = categories.filter((c) => c.id !== cat.id);
-      if (remaining.length > 0) {
-        setSelectedCat(remaining[0].id);
-      }
-      showFeedback(`Categoría "${cat.name.es}" eliminada.`);
+    // Tiene platos: abrimos el panel para elegir si se mueven o se borran.
+    const firstOther = categories.find((c) => c.id !== cat.id);
+    setMoveTargetId(firstOther?.id || '');
+    setDeletingCategory(cat);
+  };
+
+  const handleMoveAndDeleteCategory = () => {
+    if (!deletingCategory || !moveTargetId) return;
+    const target = categories.find((c) => c.id === moveTargetId);
+    onDeleteCategory?.(deletingCategory.id, moveTargetId);
+    finishCategoryDelete(
+      deletingCategory,
+      `Los platos pasaron a "${target?.name.es || 'otra categoría'}" y se eliminó "${deletingCategory.name.es}".`
+    );
+  };
+
+  const handleDeleteCategoryWithItems = () => {
+    if (!deletingCategory) return;
+    const count = items.filter((i) => i.categoryId === deletingCategory.id).length;
+    if (
+      window.confirm(
+        `Se van a borrar "${deletingCategory.name.es}" y sus ${count} plato(s). Esto no se puede deshacer. ¿Seguís?`
+      )
+    ) {
+      onDeleteCategory?.(deletingCategory.id);
+      finishCategoryDelete(deletingCategory, `Se eliminó "${deletingCategory.name.es}" con sus platos.`);
     }
   };
 
+  const todayWeeklyDish =
+    weeklyOverrideDay !== null
+      ? weeklyDishes.find((d) => d.dayNumber === weeklyOverrideDay)
+      : undefined;
+
   return (
-    <div className="min-h-screen bg-cream text-ink font-sans pb-24">
+    // data-clarity-mask: Clarity no graba el contenido del panel de la dueña.
+    <div data-clarity-mask="true" className="min-h-screen bg-cream text-ink font-sans pb-24">
       <div className="sticky top-0 z-40 bg-paper border-b border-line px-4 py-3 shadow-xs">
         <div className="max-w-xl mx-auto flex items-center justify-between">
           <button
@@ -220,6 +276,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         </div>
       </div>
 
+      {saveError && (
+        <div className="max-w-xl mx-auto px-4 pt-3">
+          <p role="alert" className="px-4 py-3 rounded-xl bg-wine/10 border border-wine/30 text-wine text-sm font-medium">
+            No se guardó el último cambio: {saveError}
+          </p>
+        </div>
+      )}
       <div className="max-w-xl mx-auto px-4 pt-4">
         {feedbackMsg && (
           <div
@@ -240,12 +303,35 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         )}
 
         <div className="bg-paper rounded-2xl border border-line p-4 mb-6 shadow-soft">
-          <div className="flex items-center justify-between gap-2 mb-2">
-            <div className="flex items-center gap-2 text-wine font-serif font-medium text-lg">
-              <Calendar size={18} />
-              <span>Menú Semanal Ejecutivo</span>
-            </div>
-          </div>
+          <button
+            type="button"
+            onClick={() => setIsWeeklyOpen((open) => !open)}
+            aria-expanded={isWeeklyOpen}
+            aria-controls="weekly-editor"
+            className="w-full flex items-center justify-between gap-2 text-left min-h-[44px]"
+          >
+            <span className="min-w-0">
+              <span className="flex items-center gap-2 text-wine font-serif font-medium text-lg">
+                <Calendar size={18} />
+                <span>Menú Semanal Ejecutivo</span>
+              </span>
+              {!isWeeklyOpen && (
+                <span className="block text-xs text-muted mt-0.5 truncate">
+                  {todayWeeklyDish
+                    ? `Fijado: ${todayWeeklyDish.dayName.es} · ${formatDishTitle(todayWeeklyDish.title.es)}`
+                    : `${weeklyDishes.length} platos · automático por día`}{' '}
+                  · Tocá para editar
+                </span>
+              )}
+            </span>
+            <ChevronDown
+              size={20}
+              className={`text-gold shrink-0 transition-transform ${isWeeklyOpen ? 'rotate-180' : ''}`}
+            />
+          </button>
+
+          {isWeeklyOpen && (
+          <div id="weekly-editor" className="mt-3 animate-fade-in">
           <p className="text-xs text-muted mb-3">
             Platos caseros del mediodía de Lunes a Viernes. Tocá el lápiz para editar el plato, sus traducciones o precios:
           </p>
@@ -330,6 +416,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               </div>
             ))}
           </div>
+          </div>
+          )}
         </div>
 
         <div className="bg-paper rounded-2xl border border-line p-4 mb-4 shadow-soft">
@@ -360,45 +448,57 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 onClick={onResetDefaults}
                 className="min-w-[36px] min-h-[36px] p-1.5 rounded-lg border border-line text-muted hover:text-wine transition-colors flex items-center justify-center"
                 title="Restaurar toda la carta original"
+                    aria-label="Restaurar toda la carta original"
               >
                 <RotateCcw size={14} />
               </button>
             </div>
           </div>
 
-          <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1 items-center">
-            {categories.map((c) => {
-              const count = items.filter((i) => i.categoryId === c.id).length;
-              return (
-                <button
-                  key={c.id}
-                  type="button"
-                  aria-pressed={selectedCat === c.id}
-                  onClick={() => setSelectedCat(c.id)}
-                  className={`min-h-[34px] px-3 py-1.5 rounded-full text-xs whitespace-nowrap transition-all shrink-0 ${
-                    selectedCat === c.id
-                      ? 'bg-wine text-white font-medium shadow-xs'
-                      : 'bg-cream text-muted border border-line hover:border-gold/60 hover:text-ink'
-                  }`}
-                >
-                  {c.name.es} ({count})
-                </button>
-              );
-            })}
-            <button
-              type="button"
-              onClick={() => setIsCreatingCategory(true)}
-              className="min-h-[34px] px-3 py-1.5 rounded-full text-xs whitespace-nowrap transition-all border border-dashed border-wine/40 text-wine hover:bg-wine/10 hover:border-wine font-medium flex items-center gap-1 shrink-0"
-              title="Crear nueva categoría"
+          <p className="text-[11px] text-muted mb-1.5">Deslizá para ver todas las categorías.</p>
+          <div className="relative -mx-4">
+            <div
+              ref={categoryScroller.ref}
+              {...categoryScroller.handlers}
+              className={`flex gap-2 overflow-x-auto no-scrollbar px-4 py-1.5 select-none ${
+                categoryScroller.isDragging ? 'cursor-grabbing' : 'cursor-grab'
+              }`}
+              style={{ WebkitOverflowScrolling: 'touch', overscrollBehaviorX: 'contain' }}
+              role="group"
+              aria-label="Categorías de la carta"
             >
-              <Plus size={13} />
-              <span>Nueva categoría</span>
-            </button>
+              {categories.map((c) => {
+                const count = items.filter((i) => i.categoryId === c.id).length;
+                const isActive = selectedCat === c.id;
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    aria-pressed={isActive}
+                    onClick={() => {
+                      if (categoryScroller.wasDrag()) return;
+                      setSelectedCat(c.id);
+                      setIsReordering(false);
+                      setDeletingCategory(null);
+                    }}
+                    className={`h-10 px-4 rounded-full text-sm whitespace-nowrap shrink-0 ${
+                      isActive ? 'liquid-wine font-medium' : 'liquid text-ink/85 hover:text-ink'
+                    }`}
+                  >
+                    {c.name.es} <span className={isActive ? 'text-white/75' : 'text-muted'}>({count})</span>
+                  </button>
+                );
+              })}
+            </div>
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute right-0 inset-y-0 w-8 bg-gradient-to-l from-paper to-transparent"
+            />
           </div>
 
           {currentCategory && (
-            <div className="mt-3 pt-3 border-t border-line/60 flex items-center justify-between gap-2 text-xs">
-              <div className="min-w-0 flex-1">
+            <div className="mt-3 pt-3 border-t border-line/60 flex flex-wrap items-center justify-between gap-2 text-xs">
+              <div className="min-w-[45%] flex-1">
                 <span className="font-serif font-semibold text-ink text-sm">
                   {currentCategory.name.es}
                 </span>
@@ -412,14 +512,42 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 <span className="text-[11px] text-muted bg-cream px-2 py-0.5 rounded-md border border-line">
                   {currentCatItems.length} {currentCatItems.length === 1 ? 'plato' : 'platos'}
                 </span>
-                {onDeleteCategory && currentCatItems.length === 0 && (
+                {onUpdateCategory && (
+                  <button
+                    type="button"
+                    onClick={() => setEditingCategory(currentCategory)}
+                    className="min-h-[34px] px-2.5 rounded-lg border border-line text-ink hover:border-gold text-xs font-medium inline-flex items-center gap-1.5 transition-colors"
+                    title="Cambiar el nombre o la descripción de esta categoría"
+                  >
+                    <Edit2 size={13} />
+                    <span>Editar</span>
+                  </button>
+                )}
+                {onReorderItem && currentCatItems.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => setIsReordering((v) => !v)}
+                    aria-pressed={isReordering}
+                    className={`min-h-[34px] px-2.5 rounded-lg border text-xs font-medium inline-flex items-center gap-1.5 transition-colors ${
+                      isReordering
+                        ? 'bg-ink text-cream border-ink'
+                        : 'border-line text-ink hover:border-gold'
+                    }`}
+                    title="Cambiar el orden en que aparecen los platos"
+                  >
+                    <ArrowUpDown size={13} />
+                    <span>{isReordering ? 'Listo' : 'Ordenar'}</span>
+                  </button>
+                )}
+                {onDeleteCategory && (
                   <button
                     type="button"
                     onClick={() => handleDeleteCategoryClick(currentCategory)}
-                    className="p-1 rounded-md text-muted hover:text-wine hover:bg-wine/10 transition-colors"
-                    title={`Eliminar categoría vacía "${currentCategory.name.es}"`}
+                    className="min-h-[34px] px-2.5 rounded-lg border border-line text-muted hover:text-wine hover:border-wine/40 hover:bg-wine/5 text-xs inline-flex items-center gap-1.5 transition-colors"
+                    title={`Eliminar la categoría "${currentCategory.name.es}"`}
                   >
                     <Trash2 size={13} />
+                    <span>Eliminar</span>
                   </button>
                 )}
               </div>
@@ -427,8 +555,118 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           )}
         </div>
 
+        {deletingCategory && (
+          <div
+            role="alertdialog"
+            aria-labelledby="delete-cat-title"
+            className="mb-4 p-4 rounded-2xl border border-wine/30 bg-wine/5 animate-fade-in"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <h3 id="delete-cat-title" className="font-serif text-lg text-ink leading-snug">
+                Eliminar “{deletingCategory.name.es}”
+              </h3>
+              <button
+                type="button"
+                onClick={() => setDeletingCategory(null)}
+                className="w-9 h-9 -mt-1 -mr-1 inline-flex items-center justify-center rounded-full text-muted hover:text-ink"
+                aria-label="Cancelar"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <p className="text-sm text-muted mt-1">
+              Tiene {items.filter((i) => i.categoryId === deletingCategory.id).length} plato(s). ¿Qué
+              hacemos con ellos?
+            </p>
+
+            <label className="block text-xs font-semibold text-ink mt-3 mb-1">
+              Pasarlos a la categoría
+            </label>
+            <div className="flex gap-2 flex-wrap">
+              <select
+                value={moveTargetId}
+                onChange={(e) => setMoveTargetId(e.target.value)}
+                className="flex-1 min-w-[180px] min-h-[40px] bg-white border border-line rounded-lg px-3 text-sm text-ink focus:border-wine focus:outline-none"
+              >
+                {categories
+                  .filter((c) => c.id !== deletingCategory.id)
+                  .map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name.es}
+                    </option>
+                  ))}
+              </select>
+              <button
+                type="button"
+                onClick={handleMoveAndDeleteCategory}
+                className="min-h-[40px] px-3.5 rounded-lg bg-wine hover:bg-wine-dark text-white text-sm font-medium"
+              >
+                Mover y eliminar categoría
+              </button>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleDeleteCategoryWithItems}
+              className="mt-3 min-h-[40px] px-3.5 rounded-lg border border-wine/40 text-wine text-sm font-medium hover:bg-wine/10 inline-flex items-center gap-1.5"
+            >
+              <Trash2 size={14} />
+              <span>Eliminar la categoría y todos sus platos</span>
+            </button>
+          </div>
+        )}
+
+        {isReordering && (
+          <p className="mb-3 text-xs text-muted text-center">
+            Usá las flechas o elegí el número de posición. El orden se ve al instante en la carta.
+          </p>
+        )}
+
         <div className="space-y-2.5">
-          {currentCatItems.map((item) => {
+          {currentCatItems.map((item, index) => {
+            if (isReordering && onReorderItem) {
+              return (
+                <div
+                  key={item.id}
+                  className="bg-paper rounded-xl border border-line p-2.5 flex items-center gap-2.5 shadow-2xs"
+                >
+                  <select
+                    value={index}
+                    onChange={(e) => onReorderItem(item.id, parseInt(e.target.value, 10))}
+                    aria-label={`Posición de ${item.name.es}`}
+                    className="w-14 min-h-[40px] bg-cream border border-line rounded-lg px-1.5 text-sm font-semibold text-ink text-center focus:border-wine focus:outline-none"
+                  >
+                    {currentCatItems.map((_, pos) => (
+                      <option key={pos} value={pos}>
+                        {pos + 1}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="flex-1 min-w-0 font-serif text-lg text-ink leading-tight truncate">
+                    {formatDishTitle(item.name.es)}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => onReorderItem(item.id, index - 1)}
+                    disabled={index === 0}
+                    className="w-10 h-10 rounded-lg border border-line text-ink hover:border-gold disabled:opacity-30 inline-flex items-center justify-center"
+                    aria-label={`Subir ${item.name.es}`}
+                  >
+                    <ChevronUp size={18} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onReorderItem(item.id, index + 1)}
+                    disabled={index === currentCatItems.length - 1}
+                    className="w-10 h-10 rounded-lg border border-line text-ink hover:border-gold disabled:opacity-30 inline-flex items-center justify-center"
+                    aria-label={`Bajar ${item.name.es}`}
+                  >
+                    <ChevronDown size={18} />
+                  </button>
+                </div>
+              );
+            }
+
             const currentVal =
               editingPrices[item.id] !== undefined
                 ? editingPrices[item.id]
@@ -437,7 +675,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             return (
               <div
                 key={item.id}
-                className={`bg-paper rounded-xl border p-3.5 flex items-center justify-between gap-3 shadow-2xs transition-colors ${
+                className={`bg-paper rounded-xl border p-3.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-2.5 shadow-2xs transition-colors ${
                   item.available ? 'border-line' : 'border-wine/30 bg-wine/5'
                 }`}
               >
@@ -455,9 +693,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   </div>
                 )}
 
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-[60%]">
                   <div className="flex items-center gap-1.5 flex-wrap">
-                    <h4 className="font-serif text-lg font-medium text-ink leading-tight truncate">
+                    <h4 className="font-serif text-lg font-medium text-ink leading-tight">
                       {formatDishTitle(item.name.es)}
                     </h4>
                     {item.dietary && item.dietary.length > 0 && (
@@ -474,27 +712,38 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   </p>
                 </div>
 
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <div className="relative">
-                    <span className="absolute left-2 top-2 text-xs text-muted font-bold">$</span>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      aria-label={`Precio de ${item.name.es}`}
-                      value={currentVal}
-                      onChange={(e) => handlePriceInputChange(item.id, e.target.value)}
-                      className="w-20 min-h-[34px] bg-cream border border-line rounded-lg pl-5 pr-1.5 py-1 text-xs font-semibold text-ink text-right focus:border-wine focus:outline-none"
-                    />
-                  </div>
+                <div className="flex items-center justify-end gap-1.5 w-full sm:w-auto">
+                  {getFixedUsdPrice(item) ? (
+                    <span
+                      className="mr-auto sm:mr-0 min-h-[34px] inline-flex items-center px-2.5 rounded-lg border border-gold/40 bg-gold/10 text-xs font-semibold text-gold-dark"
+                      title="Precio fijo en dólares, definido en el código (db/fixedPrices.ts)"
+                    >
+                      {formatUsdPrice(getFixedUsdPrice(item) as number)} · precio fijo
+                    </span>
+                  ) : (
+                    <>
+                      <div className="relative mr-auto sm:mr-0">
+                        <span className="absolute left-2 top-2 text-xs text-muted font-bold">$</span>
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          aria-label={`Precio de ${item.name.es}`}
+                          value={currentVal}
+                          onChange={(e) => handlePriceInputChange(item.id, e.target.value)}
+                          className="w-24 min-h-[34px] bg-cream border border-line rounded-lg pl-5 pr-1.5 py-1 text-xs font-semibold text-ink text-right focus:border-wine focus:outline-none"
+                        />
+                      </div>
 
-                  <button
-                    type="button"
-                    onClick={() => handleSavePrice(item.id)}
-                    className="min-w-[34px] min-h-[34px] bg-wine hover:bg-wine-dark text-white p-1.5 rounded-lg transition-colors flex items-center justify-center"
-                    title="Guardar precio rápido"
-                  >
-                    <Save size={13} />
-                  </button>
+                      <button
+                        type="button"
+                        onClick={() => handleSavePrice(item.id)}
+                        className="min-w-[34px] min-h-[34px] bg-wine hover:bg-wine-dark text-white p-1.5 rounded-lg transition-colors flex items-center justify-center"
+                        title="Guardar precio rápido"
+                      >
+                        <Save size={13} />
+                      </button>
+                    </>
+                  )}
 
                   <button
                     type="button"
@@ -656,6 +905,19 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           </form>
         </div>
       </div>
+
+      {editingCategory && onUpdateCategory && (
+        <CategoryFormModal
+          existingCategories={categories}
+          category={editingCategory}
+          onClose={() => setEditingCategory(null)}
+          onSave={(updated) => {
+            onUpdateCategory(updated);
+            setEditingCategory(null);
+            showFeedback(`Categoría "${updated.name.es}" actualizada.`);
+          }}
+        />
+      )}
 
       {isCreatingCategory && (
         <CategoryFormModal

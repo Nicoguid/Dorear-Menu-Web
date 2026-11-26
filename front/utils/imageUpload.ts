@@ -1,4 +1,4 @@
-import { SUPABASE_IMAGES_BUCKET, supabase } from './supabaseClient';
+import { SUPABASE_IMAGES_BUCKET, getSupabase } from './supabaseClient';
 
 const MAX_RAW_FILE_BYTES = 20 * 1024 * 1024;
 const MAX_PASSTHROUGH_BYTES = 5 * 1024 * 1024;
@@ -155,6 +155,7 @@ export async function uploadProductImage(file: File): Promise<string> {
   if (file.size > MAX_RAW_FILE_BYTES) {
     throw new Error('La foto es demasiado pesada (máximo 20 MB).');
   }
+  const supabase = await getSupabase();
   if (!supabase) {
     throw new Error('Supabase no está configurado para subir fotos.');
   }

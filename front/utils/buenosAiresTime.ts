@@ -1,3 +1,5 @@
+import { BUSINESS_INFO, minutesToHHMM } from '../../db/businessInfo';
+
 const BS_AS_TIMEZONE = 'America/Argentina/Buenos_Aires';
 
 export interface BuenosAiresNow {
@@ -88,15 +90,16 @@ export interface StoreOpenStatus {
 export function getStoreOpenStatus(date: Date = new Date()): StoreOpenStatus {
   const bsAs = getBuenosAiresNow(date);
   const isWeekday = bsAs.weekday >= 1 && bsAs.weekday <= 5;
-  const openMinutes = isWeekday ? 7 * 60 + 30 : 8 * 60 + 30;
-  const closeMinutes = isWeekday ? 21 * 60 : 20 * 60 + 30;
+  const schedule = isWeekday ? BUSINESS_INFO.hours.weekday : BUSINESS_INFO.hours.weekend;
+  const openMinutes = schedule.open;
+  const closeMinutes = schedule.close;
   const isOpen = bsAs.totalMinutes >= openMinutes && bsAs.totalMinutes < closeMinutes;
 
   return {
     isOpen,
     isWeekday,
     day: bsAs.weekday,
-    closesAt: isWeekday ? '21:00' : '20:30',
+    closesAt: minutesToHHMM(closeMinutes),
   };
 }
 
